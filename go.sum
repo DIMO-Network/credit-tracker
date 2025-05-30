@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DIMO-Network/cloudevent v0.1.0 h1:ze0ngJQBXjSSyBnEAUO+YvClvkqM68kNko/czY3GfLo=
 github.com/DIMO-Network/cloudevent v0.1.0/go.mod h1:RS9Byb0ycb5b7OFe9y+xpF0nkR4pYYS6Om/ccs3N5Z4=
+github.com/DIMO-Network/shared v1.0.3 h1:kQbIuvuUEDgUe5nov/Zuyj9OWT6WFLvNYrZxG+e5BT0=
+github.com/DIMO-Network/shared v1.0.3/go.mod h1:lDHUKwwT2LW6Zvd42Nb33dXklRNTmfyOlbUNx2dQfGY=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/MicahParks/keyfunc/v2 v2.1.0 h1:6ZXKb9Rp6qp1bDbJefnG7cTH8yMN1IC/4nf+GVjO99k=

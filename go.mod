@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/DIMO-Network/cloudevent v0.1.0
+	github.com/DIMO-Network/shared v1.0.3
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/ethereum/go-ethereum v1.15.11
 	github.com/go-jose/go-jose/v4 v4.1.0
