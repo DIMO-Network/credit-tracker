@@ -28,23 +28,24 @@ help:
 	@grep -hE '^[0-9a-zA-Z_-]+:.*?## .*$$' ${MAKEFILE_LIST} | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[0;36m%-20s\033[m %s\n", $$1, $$2}'
 	@echo ""
 
-build:
+build: ## build the binary
 	@CGO_ENABLED=1 GOOS=$(GOOS) GOARCH=$(ARCH) \
 		go build -o $(PATHINSTBIN)/$(BIN_NAME) ./cmd/$(BIN_NAME)
 
-run: build
+run: build ## run the binary
 	@./$(PATHINSTBIN)/$(BIN_NAME)
+
 all: clean target
 
-clean:
+clean: ## clean the binary
 	@rm -rf $(PATHINSTBIN)
 	
-install: build
+install: build ## install the binary
 	@install -d $(INSTALL_DIR)
 	@rm -f $(INSTALL_DIR)/$(BIN_NAME)
 	@cp $(PATHINSTBIN)/$(BIN_NAME) $(INSTALL_DIR)/$(BIN_NAME)
 
-tidy: 
+tidy: ## tidy the go mod
 	@go mod tidy
 
 test: ## run tests
@@ -61,7 +62,7 @@ tools-golangci-lint: ## install golangci-lint
 	@mkdir -p $(PATHINSTBIN)
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | BINARY=golangci-lint bash -s -- ${GOLANGCI_VERSION}
 
-tools-protoc:
+tools-protoc: ## install protoc
 	@mkdir -p $(PATHINSTBIN)
 	rm -rf $(PATHINSTBIN)/protoc
 ifeq ($(shell uname | tr A-Z a-z), darwin)
