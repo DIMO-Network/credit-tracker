@@ -12,7 +12,7 @@ import (
 	"github.com/DIMO-Network/credit-tracker/pkg/creditrepo"
 	"github.com/DIMO-Network/credit-tracker/pkg/creditservice"
 	ctgrpc "github.com/DIMO-Network/credit-tracker/pkg/grpc"
-	"github.com/DIMO-Network/shared/middleware/metrics"
+	"github.com/DIMO-Network/shared/pkg/middleware/metrics"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
