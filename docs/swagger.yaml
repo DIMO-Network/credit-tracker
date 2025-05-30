@@ -1,0 +1,56 @@
+info:
+  contact: {}
+  title: DIMO Attestation API
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Show the status of server.
+      tags:
+      - root
+  /v1/credits/{developerLicense}/{tokenId}:
+    get:
+      consumes:
+      - application/json
+      description: Get the remaining credits for a developer license and asset DID
+      parameters:
+      - description: Developer License ID
+        in: path
+        name: developerLicense
+        required: true
+        type: string
+      - description: Token ID
+        in: path
+        name: tokenId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Developer Credits
+      tags:
+      - Credits
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

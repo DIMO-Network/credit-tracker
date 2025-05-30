@@ -1,0 +1,98 @@
+replicaCount: 1
+image:
+  repository: dimozone/credit-tracker
+  pullPolicy: IfNotPresent
+  tag: "4747603"
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+podAnnotations: {}
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1001
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - all
+cronJob:
+  enabled: false
+  schedule: 0 0 * * 0
+env:
+  PORT: 8080
+  MON_PORT: 8888
+  GRPC_PORT: 8086
+  VEHICLE_NFT_CONTRACT_ADDRESS: "0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8"
+  JWT_KEY_SET_URL: https://auth.dev.dimo.zone/keys
+  DIMO_REGISTRY_CHAIN_ID: 80002
+service:
+  type: ClusterIP
+  ports:
+    mon-http:
+      port: 8888
+      targetPort: mon-http
+      protocol: TCP
+    http:
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    grpc:
+      port: 8086
+      targetPort: grpc
+      protocol: TCP
+ports:
+  - name: mon-http
+    containerPort: 8888
+    protocol: TCP
+  - name: http
+    containerPort: 8080
+    protocol: TCP
+  - name: grpc
+    containerPort: 8086
+    protocol: TCP
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dev.dimo.zone, https://admin.dev.dimo.zone
+    nginx.ingress.kubernetes.io/limit-rps: "25"
+    external-dns.alpha.kubernetes.io/hostname: credit-tracker.dev.dimo.zone
+  hosts:
+    - host: credit-tracker.dev.dimo.zone
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+resources:
+  limits:
+    cpu: 250m
+    memory: 384Mi
+  requests:
+    cpu: 100m
+    memory: 192Mi
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podDisruptionBudget:
+  minAvailable: 0
+kafka:
+  clusterName: kafka-dev-dimo-kafka
+  topics: []
+serviceMonitor:
+  enabled: true
+  path: /metrics
+  port: mon-http
+  interval: 30s

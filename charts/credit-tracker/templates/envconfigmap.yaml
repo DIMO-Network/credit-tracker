@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "credit-tracker.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "credit-tracker.labels" . | nindent 4 }}
+data:
+{{- range $key, $val := .Values.env }}
+  {{ $key }} : {{ $val | quote}}
+{{- end}}

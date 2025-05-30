@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+option go_package = "github.com/DIMO-Network/credit-tracker/pkg/grpc";
+
+package grpc;
+
+// Metadata keys for error details
+enum MetadataKey {
+  METADATA_KEY_UNSPECIFIED = 0;
+  METADATA_KEY_ASSET_DID = 1;
+  METADATA_KEY_TRANSACTION_HASH = 2;
+  METADATA_KEY_DEVELOPER_LICENSE = 3;
+}
+
+// ErrorReason represents the specific reason for a credit tracker error
+enum ErrorReason {
+  ERROR_REASON_UNSPECIFIED = 0;
+  ERROR_REASON_INSUFFICIENT_CREDITS = 1;
+  ERROR_REASON_INVALID_ASSET_DID = 2;
+  ERROR_REASON_INVALID_DEVELOPER_LICENSE = 3;
+}
+
+// ErrorDomain represents the domain where the error occurred
+enum ErrorDomain {
+  ERROR_DOMAIN_UNSPECIFIED = 0;
+  ERROR_DOMAIN_CREDIT_TRACKER = 1;
+}
+
+
+// Credit tracking service definition
+service CreditTracker {
+  // CheckCredits verifies the available credits for a given license and token
+  rpc CheckCredits(CreditCheckRequest) returns (CreditCheckResponse) {}
+  
+  // DeductCredits attempts to deduct credits from a given license and token
+  rpc DeductCredits(CreditDeductRequest) returns (CreditDeductResponse) {}
+
+  // RefundCredits refunds credits to a given license and token
+  rpc RefundCredits(RefundCreditsRequest) returns (RefundCreditsResponse) {}
+}
+
+// Request message for checking credits
+message CreditCheckRequest {
+  string developer_license = 1;
+  string asset_did = 2;
+}
+
+// Response message for credit check
+message CreditCheckResponse {
+  int64 remaining_credits = 1;
+}
+
+// Request message for deducting credits
+message CreditDeductRequest {
+  string developer_license = 1;
+  string asset_did = 2;
+  int64 amount = 3;
+}
+
+// Response message for credit deduction
+message CreditDeductResponse {
+  int64 remaining_credits = 1;
+}
+
+// Request message for refunding credits
+message RefundCreditsRequest {
+  string developer_license = 1;
+  string asset_did = 2;
+  int64 amount = 3;
+  // Optional reason for refunding credits (e.g., "cancelled_operation", "error_recovery")
+  string reason = 4;
+}
+
+// Response message for credit refund
+message RefundCreditsResponse {
+  int64 remaining_credits = 1;
+}
