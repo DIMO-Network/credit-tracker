@@ -2,14 +2,14 @@ replicaCount: 1
 image:
   repository: dimozone/credit-tracker
   pullPolicy: IfNotPresent
-  tag: "4747603"
+  tag: 0738c60
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  name: ''
 podAnnotations: {}
 podSecurityContext:
   runAsNonRoot: true
@@ -27,7 +27,7 @@ env:
   PORT: 8080
   MON_PORT: 8888
   GRPC_PORT: 8086
-  VEHICLE_NFT_CONTRACT_ADDRESS: "0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8"
+  VEHICLE_NFT_CONTRACT_ADDRESS: '0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8'
   JWT_KEY_SET_URL: https://auth.dev.dimo.zone/keys
   DIMO_REGISTRY_CHAIN_ID: 80002
 service:
@@ -60,10 +60,10 @@ ingress:
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
-    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
-    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
     nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dev.dimo.zone, https://admin.dev.dimo.zone
-    nginx.ingress.kubernetes.io/limit-rps: "25"
+    nginx.ingress.kubernetes.io/limit-rps: '25'
     external-dns.alpha.kubernetes.io/hostname: credit-tracker.dev.dimo.zone
   hosts:
     - host: credit-tracker.dev.dimo.zone
