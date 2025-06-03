@@ -53,8 +53,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "credit-tracker.fullname" . }}-config
+            {{- if .Values.secret.enabled }}
             - secretRef:
                 name: {{ include "credit-tracker.fullname" . }}-secret
+            {{- end }}
           ports:
 {{ toYaml .Values.ports | indent 12 }}
           livenessProbe:
