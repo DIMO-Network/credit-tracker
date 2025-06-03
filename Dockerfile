@@ -1,5 +1,4 @@
 FROM golang:1.24 AS build
-ARG APP_NAME
 RUN useradd -u 10001 dimo
 
 WORKDIR /build
@@ -9,6 +8,7 @@ RUN make tidy
 RUN make build
 
 FROM gcr.io/distroless/base AS final
+ARG APP_NAME
 
 LABEL maintainer="DIMO <hello@dimo.zone>"
 
