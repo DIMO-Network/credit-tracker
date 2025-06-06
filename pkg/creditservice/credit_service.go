@@ -9,7 +9,6 @@ import (
 
 	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/credit-tracker/pkg/grpc"
-	"github.com/rs/zerolog"
 )
 
 const creditsFromBurn = 50_000
@@ -33,21 +32,19 @@ func NewCreditTrackerService(repo Repository) *CreditTrackerService {
 
 // CheckCredits implements the credit check operation
 func (s *CreditTrackerService) CheckCredits(ctx context.Context, req *grpc.CreditCheckRequest) (*grpc.CreditCheckResponse, error) {
-	did, err := decodeAssetDID(req.AssetDid)
-	if err != nil {
+	if _, err := decodeAssetDID(req.AssetDid); err != nil {
 		return nil, err
 	}
-
-	logger := zerolog.Ctx(ctx)
-	logger.Info().
-		Str("developer_license", req.DeveloperLicense).
-		Int64("vehicleTokenId", did.TokenID.Int64()).
-		Msg("Checking credits")
 
 	credits, err := s.repository.GetCredits(req.DeveloperLicense, req.AssetDid)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to get credits")
 	}
+
+	// Record metrics
+	CreditOperations.WithLabelValues("check", req.DeveloperLicense, req.AssetDid, getAmountBucket(credits)).Inc()
+	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(credits))
+
 	return &grpc.CreditCheckResponse{
 		RemainingCredits: credits,
 	}, nil
@@ -55,8 +52,7 @@ func (s *CreditTrackerService) CheckCredits(ctx context.Context, req *grpc.Credi
 
 // DeductCredits implements the credit deduction operation
 func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.CreditDeductRequest) (*grpc.CreditDeductResponse, error) {
-	did, err := decodeAssetDID(req.AssetDid)
-	if err != nil {
+	if _, err := decodeAssetDID(req.AssetDid); err != nil {
 		return nil, err
 	}
 
@@ -78,12 +74,9 @@ func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.Cred
 		}
 	}
 
-	logger := zerolog.Ctx(ctx)
-	logger.Info().
-		Str("developer_license", req.DeveloperLicense).
-		Int64("vehicleTokenId", did.TokenID.Int64()).
-		Int64("amount", req.Amount).
-		Msg("Deducting credits")
+	// Record metrics
+	CreditOperations.WithLabelValues("deduct", req.DeveloperLicense, req.AssetDid, getAmountBucket(req.Amount)).Inc()
+	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(newCredits))
 
 	return &grpc.CreditDeductResponse{
 		RemainingCredits: newCredits,
@@ -92,8 +85,7 @@ func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.Cred
 
 // RefundCredits implements the credit refund operation
 func (s *CreditTrackerService) RefundCredits(ctx context.Context, req *grpc.RefundCreditsRequest) (*grpc.RefundCreditsResponse, error) {
-	did, err := decodeAssetDID(req.AssetDid)
-	if err != nil {
+	if _, err := decodeAssetDID(req.AssetDid); err != nil {
 		return nil, err
 	}
 
@@ -102,18 +94,15 @@ func (s *CreditTrackerService) RefundCredits(ctx context.Context, req *grpc.Refu
 		return nil, status.Error(codes.Internal, "Failed to get credits")
 	}
 
-	logger := zerolog.Ctx(ctx)
-	logger.Info().
-		Str("developer_license", req.DeveloperLicense).
-		Int64("vehicleTokenId", did.TokenID.Int64()).
-		Int64("amount", req.Amount).
-		Str("reason", req.Reason).
-		Msg("Refunding credits")
-
 	newCredits, err := s.repository.UpdateCredits(req.DeveloperLicense, req.AssetDid, currentCredits+req.Amount)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to update credits")
 	}
+
+	// Record metrics
+	CreditOperations.WithLabelValues("refund", req.DeveloperLicense, req.AssetDid, getAmountBucket(req.Amount)).Inc()
+	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(newCredits))
+
 	return &grpc.RefundCreditsResponse{
 		RemainingCredits: newCredits,
 	}, nil
