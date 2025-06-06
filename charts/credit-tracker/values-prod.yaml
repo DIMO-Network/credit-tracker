@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: dimozone/credit-tracker
   pullPolicy: IfNotPresent
-  tag: 0.0.21
+  tag: 0.0.0
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
@@ -10,7 +10,7 @@ env:
   PORT: 8080
   MON_PORT: 8888
   GRPC_PORT: 8086
-  VEHICLE_NFT_CONTRACT_ADDRESS: "0xbA5738a18d83D41847dfFbDC6101d37C69c9B0cF"
+  VEHICLE_NFT_CONTRACT_ADDRESS: '0xbA5738a18d83D41847dfFbDC6101d37C69c9B0cF'
   JWT_KEY_SET_URL: https://auth.dimo.zone/keys
   DIMO_REGISTRY_CHAIN_ID: 137
 ingress:
@@ -18,10 +18,10 @@ ingress:
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/auth-tls-secret: ingress/cf-origin-ca
-    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
-    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: 'on'
+    nginx.ingress.kubernetes.io/enable-cors: 'true'
     nginx.ingress.kubernetes.io/cors-allow-origin: https://app.dimo.zone, https://admin.team.dimo.zone
-    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/limit-rps: '50'
     external-dns.alpha.kubernetes.io/hostname: credit-tracker.dimo.zone
   hosts:
     - host: credit-tracker.dimo.zone
