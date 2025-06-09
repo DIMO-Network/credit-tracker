@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 image:
   repository: dimozone/credit-tracker
   pullPolicy: IfNotPresent
@@ -32,7 +32,7 @@ ingress:
 resources:
   limits:
     cpu: 1
-    memory: 1024Mi
+    memory: 2048Mi
   requests:
     cpu: 100m
     memory: 256Mi
