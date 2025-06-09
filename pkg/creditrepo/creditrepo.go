@@ -1,10 +1,18 @@
 package creditrepo
 
 import (
-	"fmt"
+	"context"
 	"sync"
 	"sync/atomic"
 )
+
+const InsufficientCreditsErr = constError("insufficient credits: would result in negative balance")
+
+type constError string
+
+func (e constError) Error() string {
+	return string(e)
+}
 
 // Repository implements the credit repository interface
 type Repository struct {
@@ -19,31 +27,56 @@ func New() *Repository {
 	}
 }
 
-// UpdateCredits updates the credits for a developer license and asset DID
-func (r *Repository) UpdateCredits(developerLicense, assetDid string, amount int64) (int64, error) {
-	if amount < 0 {
-		return 0, fmt.Errorf("credit amount cannot be negative")
+// UpdateCredits updates the credits for a developer license and asset DID by adding the amount
+// A positive amount adds credits, a negative amount deducts credits
+func (r *Repository) UpdateCredits(_ context.Context, developerLicense, assetDid string, amount int64) (int64, error) {
+	// Check if developer exists under read lock
+	r.mu.RLock()
+	devCredits, devExists := r.credits[developerLicense]
+	if !devExists {
+		r.mu.RUnlock()
+		// Create developer map under write lock
+		r.mu.Lock()
+		// Double-check after acquiring write lock
+		if _, exists := r.credits[developerLicense]; !exists {
+			r.credits[developerLicense] = make(map[string]*atomic.Int64)
+			devCredits = r.credits[developerLicense]
+		}
+		r.mu.Unlock()
+		// Switch back to read lock for asset check
+		r.mu.RLock()
 	}
 
-	r.mu.Lock()
-	// Initialize the inner map if it doesn't exist
-	if _, exists := r.credits[developerLicense]; !exists {
-		r.credits[developerLicense] = make(map[string]*atomic.Int64)
+	// Check if asset exists under read lock
+	atomicVal, exists := devCredits[assetDid]
+	if !exists {
+		r.mu.RUnlock()
+		// Create atomic value under write lock
+		r.mu.Lock()
+		if _, exists := r.credits[developerLicense][assetDid]; !exists {
+			devCredits[assetDid] = &atomic.Int64{}
+			atomicVal = devCredits[assetDid]
+		}
+		r.mu.Unlock()
+	} else {
+		r.mu.RUnlock()
 	}
 
-	// Initialize the atomic value if it doesn't exist
-	if _, exists := r.credits[developerLicense][assetDid]; !exists {
-		r.credits[developerLicense][assetDid] = &atomic.Int64{}
-	}
-	r.mu.Unlock()
+	// Update value atomically without any locks
+	newAmount := atomicVal.Add(amount)
 
-	// Update the credits atomically
-	r.credits[developerLicense][assetDid].Store(amount)
-	return amount, nil
+	// Check if the result would be negative
+	if newAmount < 0 {
+		// Revert the change
+		atomicVal.Add(-amount)
+		return 0, InsufficientCreditsErr
+	}
+
+	return newAmount, nil
 }
 
 // GetCredits returns the credits for a developer license and asset DID
-func (r *Repository) GetCredits(developerLicense, assetDid string) (int64, error) {
+func (r *Repository) GetCredits(_ context.Context, developerLicense, assetDid string) (int64, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

@@ -2,20 +2,23 @@ package creditservice
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/DIMO-Network/cloudevent"
+	"github.com/DIMO-Network/credit-tracker/pkg/creditrepo"
 	"github.com/DIMO-Network/credit-tracker/pkg/grpc"
+	"github.com/rs/zerolog"
 )
 
 const creditsFromBurn = 50_000
 
 type Repository interface {
-	UpdateCredits(developerLicense, assetDid string, amount int64) (int64, error)
-	GetCredits(developerLicense, assetDid string) (int64, error)
+	UpdateCredits(ctx context.Context, developerLicense, assetDid string, amount int64) (int64, error)
+	GetCredits(ctx context.Context, developerLicense, assetDid string) (int64, error)
 }
 
 // creditTrackerService implements the CreditTrackerService interface
@@ -36,7 +39,7 @@ func (s *CreditTrackerService) CheckCredits(ctx context.Context, req *grpc.Credi
 		return nil, err
 	}
 
-	credits, err := s.repository.GetCredits(req.DeveloperLicense, req.AssetDid)
+	credits, err := s.repository.GetCredits(ctx, req.DeveloperLicense, req.AssetDid)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to get credits")
 	}
@@ -56,22 +59,17 @@ func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.Cred
 		return nil, err
 	}
 
-	currentCredits, err := s.repository.GetCredits(req.DeveloperLicense, req.AssetDid)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to get credits")
+	// First attempt to deduct credits
+	newCredits, err := s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, -req.Amount)
+	for errors.Is(err, creditrepo.InsufficientCreditsErr) {
+		newCredits, err = s.addBurnCredits(ctx, req.DeveloperLicense, req.AssetDid)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "Failed to add credits after burn")
+		}
+		newCredits, err = s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, -req.Amount)
 	}
-	var newCredits int64
-	if currentCredits < req.Amount {
-		newCredits = currentCredits + creditsFromBurn - req.Amount
-		newCredits, err = s.repository.UpdateCredits(req.DeveloperLicense, req.AssetDid, newCredits)
-		if err != nil {
-			return nil, status.Error(codes.Internal, "Failed to update credits")
-		}
-	} else {
-		newCredits, err = s.repository.UpdateCredits(req.DeveloperLicense, req.AssetDid, currentCredits-req.Amount)
-		if err != nil {
-			return nil, status.Error(codes.Internal, "Failed to update credits")
-		}
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Failed to update credits")
 	}
 
 	// Record metrics
@@ -89,12 +87,7 @@ func (s *CreditTrackerService) RefundCredits(ctx context.Context, req *grpc.Refu
 		return nil, err
 	}
 
-	currentCredits, err := s.repository.GetCredits(req.DeveloperLicense, req.AssetDid)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to get credits")
-	}
-
-	newCredits, err := s.repository.UpdateCredits(req.DeveloperLicense, req.AssetDid, currentCredits+req.Amount)
+	newCredits, err := s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, req.Amount)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to update credits")
 	}
@@ -164,4 +157,20 @@ func HandleInsufficientCredits(ctx context.Context, assetDid string, hasCredits 
 		return st.Err()
 	}
 	return nil
+}
+
+// addBurnCredits adds burn credits to the user's balance then tries to deduct the amount requested.
+func (s *CreditTrackerService) addBurnCredits(ctx context.Context, developerLicense, assetDid string) (int64, error) {
+	// Add burn credits
+	burnCredits, err := s.repository.UpdateCredits(ctx, developerLicense, assetDid, creditsFromBurn)
+	if err != nil {
+		return 0, err
+	}
+
+	// Record burn credit metric
+	CreditOperations.WithLabelValues("burn", developerLicense, assetDid, getAmountBucket(creditsFromBurn)).Inc()
+	CreditBalance.WithLabelValues(developerLicense, assetDid).Set(float64(burnCredits))
+	zerolog.Ctx(ctx).Info().Str("developerLicense", developerLicense).Str("assetDid", assetDid).Int64("newBalance", burnCredits).Msg("Added burn credits")
+
+	return burnCredits, nil
 }
