@@ -40,8 +40,8 @@ func (r *Repository) UpdateCredits(_ context.Context, developerLicense, assetDid
 		// Double-check after acquiring write lock
 		if _, exists := r.credits[developerLicense]; !exists {
 			r.credits[developerLicense] = make(map[string]*atomic.Int64)
-			devCredits = r.credits[developerLicense]
 		}
+		devCredits = r.credits[developerLicense]
 		r.mu.Unlock()
 		// Switch back to read lock for asset check
 		r.mu.RLock()
@@ -55,8 +55,8 @@ func (r *Repository) UpdateCredits(_ context.Context, developerLicense, assetDid
 		r.mu.Lock()
 		if _, exists := r.credits[developerLicense][assetDid]; !exists {
 			devCredits[assetDid] = &atomic.Int64{}
-			atomicVal = devCredits[assetDid]
 		}
+		atomicVal = devCredits[assetDid]
 		r.mu.Unlock()
 	} else {
 		r.mu.RUnlock()
