@@ -1,6 +1,7 @@
 package creditrepo_test
 
 import (
+	"context"
 	"sync"
 	"testing"
 
@@ -56,7 +57,7 @@ func TestRepository_UpdateCredits(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := creditrepo.New()
-			got, err := repo.UpdateCredits(tt.developerLicense, tt.assetDid, tt.amount)
+			got, err := repo.UpdateCredits(context.Background(), tt.developerLicense, tt.assetDid, tt.amount)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -67,7 +68,7 @@ func TestRepository_UpdateCredits(t *testing.T) {
 			assert.Equal(t, tt.wantAmount, got)
 
 			// Verify the amount was actually stored
-			stored, err := repo.GetCredits(tt.developerLicense, tt.assetDid)
+			stored, err := repo.GetCredits(context.Background(), tt.developerLicense, tt.assetDid)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantAmount, stored)
 		})
@@ -118,11 +119,11 @@ func TestRepository_GetCredits(t *testing.T) {
 
 			// Setup initial state if needed
 			if tt.setupAmount > 0 {
-				_, err := repo.UpdateCredits(tt.developerLicense, tt.assetDid, tt.setupAmount)
+				_, err := repo.UpdateCredits(context.Background(), tt.developerLicense, tt.assetDid, tt.setupAmount)
 				require.NoError(t, err)
 			}
 
-			got, err := repo.GetCredits(tt.developerLicense, tt.assetDid)
+			got, err := repo.GetCredits(context.Background(), tt.developerLicense, tt.assetDid)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantAmount, got)
 		})
@@ -142,14 +143,14 @@ func TestRepository_ConcurrentAccess(t *testing.T) {
 			wg.Add(1)
 			go func(amount int64) {
 				defer wg.Done()
-				_, err := repo.UpdateCredits(developerLicense, assetDid, amount)
+				_, err := repo.UpdateCredits(context.Background(), developerLicense, assetDid, amount)
 				require.NoError(t, err)
 			}(int64(i))
 		}
 		wg.Wait()
 
 		// Verify final value
-		got, err := repo.GetCredits(developerLicense, assetDid)
+		got, err := repo.GetCredits(context.Background(), developerLicense, assetDid)
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, got, int64(0))
 	})
@@ -161,7 +162,7 @@ func TestRepository_ConcurrentAccess(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				got, err := repo.GetCredits(developerLicense, assetDid)
+				got, err := repo.GetCredits(context.Background(), developerLicense, assetDid)
 				require.NoError(t, err)
 				assert.GreaterOrEqual(t, got, int64(0))
 			}()
@@ -176,12 +177,12 @@ func TestRepository_ConcurrentAccess(t *testing.T) {
 			wg.Add(2)
 			go func(amount int64) {
 				defer wg.Done()
-				_, err := repo.UpdateCredits(developerLicense, assetDid, amount)
+				_, err := repo.UpdateCredits(context.Background(), developerLicense, assetDid, amount)
 				require.NoError(t, err)
 			}(int64(i))
 			go func() {
 				defer wg.Done()
-				got, err := repo.GetCredits(developerLicense, assetDid)
+				got, err := repo.GetCredits(context.Background(), developerLicense, assetDid)
 				require.NoError(t, err)
 				assert.GreaterOrEqual(t, got, int64(0))
 			}()
