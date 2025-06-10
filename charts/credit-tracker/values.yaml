@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: dimozone/credit-tracker
   pullPolicy: IfNotPresent
-  tag: b3d7c70
+  tag: d667103
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
