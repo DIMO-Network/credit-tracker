@@ -49,6 +49,7 @@ When a pending transaction fails:
 -- Credit grants created from blockchain token burns
 -- Each grant represents tokens burned on-chain that create usable credits
 CREATE TABLE credit_grants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Unique transaction identifier
     tx_hash VARCHAR(66) PRIMARY KEY,              -- Blockchain transaction hash (0x...) - immutable proof
     license_id VARCHAR(255) NOT NULL,             -- License identifier: Ethereum address or string ID
     asset_did VARCHAR(500) NOT NULL,              -- DID string identifying the physical asset/device
