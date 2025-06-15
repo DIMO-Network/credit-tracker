@@ -1,4 +1,4 @@
-package migrate
+package migrations
 
 import (
 	"context"
@@ -7,28 +7,23 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/pressly/goose/v3"
 )
 
-//go:embed migrations
+//go:embed *.sql
 var baseFS embed.FS
 
 var migrationLock sync.Mutex
 
-// registerFuncs is a list of functions that register migrations.
-// Each migration file should have an init function that appends their register function to this list.
-// This is different from the goose registration which is public for all packages.
-var registerFuncs = []func(){}
-
-// RegisterFuncs returns the list of functions for registering goose migrations.
-func RegisterFuncs() []func() {
-	return registerFuncs
-}
-
 // RunGoose runs the goose command with the provided arguments.
 // args should be the command and the arguments to pass to goose.
 // eg RunGoose(ctx, []string{"up", "-v"}, db).
-func RunGoose(ctx context.Context, gooseArgs []string, db *sql.DB) error {
+func RunGoose(ctx context.Context, gooseArgs []string, settings db.Settings) error {
+	db, err := setupDatabase(ctx, settings)
+	if err != nil {
+		return fmt.Errorf("failed to setup database: %w", err)
+	}
 	migrationLock.Lock()
 	defer migrationLock.Unlock()
 	if len(gooseArgs) == 0 {
@@ -43,7 +38,8 @@ func RunGoose(ctx context.Context, gooseArgs []string, db *sql.DB) error {
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
-	err := goose.RunContext(ctx, cmd, db, ".", args...)
+	goose.SetTableName(dbName + ".migrations")
+	err = goose.RunContext(ctx, cmd, db, ".", args...)
 	if err != nil {
 		return fmt.Errorf("failed to run goose command: %w", err)
 	}
@@ -55,4 +51,24 @@ func RunGoose(ctx context.Context, gooseArgs []string, db *sql.DB) error {
 func setMigrations(baseFS embed.FS) {
 	goose.SetBaseFS(baseFS)
 	goose.ResetGlobalMigrations()
+}
+
+const dbName = "credit_tracker"
+
+func setupDatabase(ctx context.Context, settings db.Settings) (*sql.DB, error) {
+	// setup database
+	db, err := sql.Open("postgres", settings.BuildConnectionString(true))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open db connection: %w", err)
+	}
+	if err = db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping db: %w", err)
+	}
+
+	_, err = db.ExecContext(ctx, "CREATE SCHEMA IF NOT EXISTS "+dbName+";")
+	if err != nil {
+		return nil, fmt.Errorf("could not create schema: %w", err)
+	}
+
+	return db, nil
 }

@@ -40,8 +40,8 @@ COMMENT ON COLUMN credit_grants.status IS 'Transaction state: pending, confirmed
 COMMENT ON COLUMN credit_grants.created_at IS 'When this record was created in our system';
 COMMENT ON COLUMN credit_grants.updated_at IS 'Last modification (status changes, remaining_amount updates)';
 
--- Credit transactions represent API usage that could cause a change in state for the credit grants.
--- One transaction can consume credits from one or more grants or refund credits to one or more grants (FIFO)
+-- Credit operations represent API usage that could cause a change in state for the credit grants.
+-- One operation can consume credits from one or more grants or refund credits to one or more grants (FIFO)
 CREATE TABLE credit_operations (
     -- Primary key
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Unique operation identifier
@@ -73,14 +73,14 @@ COMMENT ON COLUMN credit_operations.api_endpoint IS 'Which API was called (e.g.,
 COMMENT ON COLUMN credit_operations.reference_id IS 'External reference (API request ID, order ID, etc.)';
 COMMENT ON COLUMN credit_operations.created_at IS 'When this operation occurred';
 
--- Junction table tracking which grants were used in each transaction
+-- Junction table tracking which grants were used in each operation
 -- Enables full audit trail of credit consumption across multiple grants
 CREATE TABLE credit_operation_grants (
     -- Primary key
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Unique detail record identifier
 
     -- Foreign keys
-    transaction_id UUID NOT NULL                   -- Links to the main operation record
+    operation_id UUID NOT NULL                   -- Links to the main operation record
         REFERENCES credit_operations(id) ON DELETE CASCADE,
     grant_tx_hash VARCHAR(66) NOT NULL,            -- Transaction hash of the grant
     grant_log_index INTEGER NOT NULL,              -- Log index of the grant within the transaction
@@ -97,7 +97,7 @@ CREATE TABLE credit_operation_grants (
 
 COMMENT ON TABLE credit_operation_grants IS 'Junction table tracking which grants were used in each operation. Enables full audit trail of credit consumption across multiple grants.';
 COMMENT ON COLUMN credit_operation_grants.id IS 'Unique detail record identifier';
-COMMENT ON COLUMN credit_operation_grants.transaction_id IS 'Links to the main operation record';
+COMMENT ON COLUMN credit_operation_grants.operation_id IS 'Links to the main operation record';
 COMMENT ON COLUMN credit_operation_grants.grant_tx_hash IS 'Transaction hash of the grant';
 COMMENT ON COLUMN credit_operation_grants.grant_log_index IS 'Log index of the grant within the transaction';
 COMMENT ON COLUMN credit_operation_grants.amount_used IS 'How many credits were taken from this specific grant';
@@ -132,13 +132,13 @@ CREATE INDEX idx_credit_grants_debt
 CREATE INDEX idx_credit_operations_license_asset
     ON credit_operations(license_id, asset_did, created_at DESC);
 
--- Finding all transactions that used a specific transaction
-CREATE INDEX idx_credit_transaction_grants_transaction
-    ON credit_transaction_grants(transaction_id);
+-- Finding all operations that used a specific operation
+CREATE INDEX idx_credit_operation_grants_operation
+ON credit_operation_grants(operation_id);
 
--- Finding all transactions that used a specific grant
-CREATE INDEX idx_credit_transaction_grants_grant
-    ON credit_transaction_grants(grant_tx_hash);
+-- Finding all operations that used a specific grant
+CREATE INDEX idx_credit_operation_grants_grant
+ON credit_operation_grants(grant_tx_hash);
 
 -- +goose StatementEnd
 
@@ -147,10 +147,12 @@ CREATE INDEX idx_credit_transaction_grants_grant
 SELECT 'down SQL query';
 DROP TABLE credit_grants;
 DROP TABLE credit_operations;
-DROP TABLE credit_transaction_grants;
+DROP TABLE credit_operation_grants;
 DROP INDEX idx_credit_grants_license_asset;
 DROP INDEX idx_credit_grants_active;
 DROP INDEX idx_credit_grants_status;
 DROP INDEX idx_credit_grants_block;
 DROP INDEX idx_credit_grants_debt;
+DROP INDEX idx_credit_operation_grants_operation;
+DROP INDEX idx_credit_operation_grants_grant;
 -- +goose StatementEnd
