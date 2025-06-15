@@ -89,6 +89,8 @@ tools-protoc-gen-go-grpc:
 	curl -L https://github.com/grpc/grpc-go/releases/download/cmd/protoc-gen-go-grpc/${PROTOC_GEN_GO_GRPC_VERSION}/protoc-gen-go-grpc.${PROTOC_GEN_GO_GRPC_VERSION}.$(shell uname | tr A-Z a-z).amd64.tar.gz | tar -zOxf - ./protoc-gen-go-grpc > $(PATHINSTBIN)/protoc-gen-go-grpc
 	@chmod +x $(PATHINSTBIN)/protoc-gen-go-grpc
 
+migration: ## Generate migration file specify name with name=your_migration_name
+	go tool goose create ${name} sql -s --dir=./pkg/migrate/migrations
 
 make tools: tools-golangci-lint tools-protoc tools-protoc-gen-go tools-protoc-gen-go-grpc## install all tools
 
