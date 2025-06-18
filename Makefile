@@ -81,7 +81,7 @@ endif
 migration: ## Generate migration file specify name with name=your_migration_name
 	go tool goose create ${name} sql -s --dir=./pkg/migrate/migrations
 
-make tools: tools-golangci-lint tools-protoc tools-protoc-gen-go tools-protoc-gen-go-grpc tools-sqlboiler-psql ## install all tools
+make tools: tools-golangci-lint tools-protoc ## install all tools
 
 generate: generate-swagger generate-go generate-grpc ## run all file generation for the project
 
