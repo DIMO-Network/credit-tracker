@@ -27,11 +27,13 @@ type CreditOperationGrant struct {
 	// Unique detail record identifier
 	ID string `boil:"id" json:"id" toml:"id" yaml:"id"`
 	// Links to the main operation record
-	OperationID string `boil:"operation_id" json:"operation_id" toml:"operation_id" yaml:"operation_id"`
-	// Transaction hash of the grant
-	GrantTXHash string `boil:"grant_tx_hash" json:"grant_tx_hash" toml:"grant_tx_hash" yaml:"grant_tx_hash"`
-	// Log index of the grant within the transaction
-	GrantLogIndex int `boil:"grant_log_index" json:"grant_log_index" toml:"grant_log_index" yaml:"grant_log_index"`
+	AppName string `boil:"app_name" json:"app_name" toml:"app_name" yaml:"app_name"`
+	// Links to the main operation record
+	ReferenceID string `boil:"reference_id" json:"reference_id" toml:"reference_id" yaml:"reference_id"`
+	// Links to the main operation record
+	OperationType string `boil:"operation_type" json:"operation_type" toml:"operation_type" yaml:"operation_type"`
+	// Links to the credit grant
+	GrantID string `boil:"grant_id" json:"grant_id" toml:"grant_id" yaml:"grant_id"`
 	// How many credits were taken from this specific grant
 	AmountUsed int64 `boil:"amount_used" json:"amount_used" toml:"amount_used" yaml:"amount_used"`
 	// When this grant usage was recorded
@@ -43,32 +45,36 @@ type CreditOperationGrant struct {
 
 var CreditOperationGrantColumns = struct {
 	ID            string
-	OperationID   string
-	GrantTXHash   string
-	GrantLogIndex string
+	AppName       string
+	ReferenceID   string
+	OperationType string
+	GrantID       string
 	AmountUsed    string
 	CreatedAt     string
 }{
 	ID:            "id",
-	OperationID:   "operation_id",
-	GrantTXHash:   "grant_tx_hash",
-	GrantLogIndex: "grant_log_index",
+	AppName:       "app_name",
+	ReferenceID:   "reference_id",
+	OperationType: "operation_type",
+	GrantID:       "grant_id",
 	AmountUsed:    "amount_used",
 	CreatedAt:     "created_at",
 }
 
 var CreditOperationGrantTableColumns = struct {
 	ID            string
-	OperationID   string
-	GrantTXHash   string
-	GrantLogIndex string
+	AppName       string
+	ReferenceID   string
+	OperationType string
+	GrantID       string
 	AmountUsed    string
 	CreatedAt     string
 }{
 	ID:            "credit_operation_grants.id",
-	OperationID:   "credit_operation_grants.operation_id",
-	GrantTXHash:   "credit_operation_grants.grant_tx_hash",
-	GrantLogIndex: "credit_operation_grants.grant_log_index",
+	AppName:       "credit_operation_grants.app_name",
+	ReferenceID:   "credit_operation_grants.reference_id",
+	OperationType: "credit_operation_grants.operation_type",
+	GrantID:       "credit_operation_grants.grant_id",
 	AmountUsed:    "credit_operation_grants.amount_used",
 	CreatedAt:     "credit_operation_grants.created_at",
 }
@@ -77,30 +83,32 @@ var CreditOperationGrantTableColumns = struct {
 
 var CreditOperationGrantWhere = struct {
 	ID            whereHelperstring
-	OperationID   whereHelperstring
-	GrantTXHash   whereHelperstring
-	GrantLogIndex whereHelperint
+	AppName       whereHelperstring
+	ReferenceID   whereHelperstring
+	OperationType whereHelperstring
+	GrantID       whereHelperstring
 	AmountUsed    whereHelperint64
 	CreatedAt     whereHelpernull_Time
 }{
 	ID:            whereHelperstring{field: "\"credit_tracker\".\"credit_operation_grants\".\"id\""},
-	OperationID:   whereHelperstring{field: "\"credit_tracker\".\"credit_operation_grants\".\"operation_id\""},
-	GrantTXHash:   whereHelperstring{field: "\"credit_tracker\".\"credit_operation_grants\".\"grant_tx_hash\""},
-	GrantLogIndex: whereHelperint{field: "\"credit_tracker\".\"credit_operation_grants\".\"grant_log_index\""},
+	AppName:       whereHelperstring{field: "\"credit_tracker\".\"credit_operation_grants\".\"app_name\""},
+	ReferenceID:   whereHelperstring{field: "\"credit_tracker\".\"credit_operation_grants\".\"reference_id\""},
+	OperationType: whereHelperstring{field: "\"credit_tracker\".\"credit_operation_grants\".\"operation_type\""},
+	GrantID:       whereHelperstring{field: "\"credit_tracker\".\"credit_operation_grants\".\"grant_id\""},
 	AmountUsed:    whereHelperint64{field: "\"credit_tracker\".\"credit_operation_grants\".\"amount_used\""},
 	CreatedAt:     whereHelpernull_Time{field: "\"credit_tracker\".\"credit_operation_grants\".\"created_at\""},
 }
 
 // CreditOperationGrantRels is where relationship names are stored.
 var CreditOperationGrantRels = struct {
-	Operation string
+	Grant string
 }{
-	Operation: "Operation",
+	Grant: "Grant",
 }
 
 // creditOperationGrantR is where relationships are stored.
 type creditOperationGrantR struct {
-	Operation *CreditOperation `boil:"Operation" json:"Operation" toml:"Operation" yaml:"Operation"`
+	Grant *CreditGrant `boil:"Grant" json:"Grant" toml:"Grant" yaml:"Grant"`
 }
 
 // NewStruct creates a new relationship struct
@@ -108,28 +116,28 @@ func (*creditOperationGrantR) NewStruct() *creditOperationGrantR {
 	return &creditOperationGrantR{}
 }
 
-func (o *CreditOperationGrant) GetOperation() *CreditOperation {
+func (o *CreditOperationGrant) GetGrant() *CreditGrant {
 	if o == nil {
 		return nil
 	}
 
-	return o.R.GetOperation()
+	return o.R.GetGrant()
 }
 
-func (r *creditOperationGrantR) GetOperation() *CreditOperation {
+func (r *creditOperationGrantR) GetGrant() *CreditGrant {
 	if r == nil {
 		return nil
 	}
 
-	return r.Operation
+	return r.Grant
 }
 
 // creditOperationGrantL is where Load methods for each relationship are stored.
 type creditOperationGrantL struct{}
 
 var (
-	creditOperationGrantAllColumns            = []string{"id", "operation_id", "grant_tx_hash", "grant_log_index", "amount_used", "created_at"}
-	creditOperationGrantColumnsWithoutDefault = []string{"operation_id", "grant_tx_hash", "grant_log_index", "amount_used"}
+	creditOperationGrantAllColumns            = []string{"id", "app_name", "reference_id", "operation_type", "grant_id", "amount_used", "created_at"}
+	creditOperationGrantColumnsWithoutDefault = []string{"app_name", "reference_id", "operation_type", "grant_id", "amount_used"}
 	creditOperationGrantColumnsWithDefault    = []string{"id", "created_at"}
 	creditOperationGrantPrimaryKeyColumns     = []string{"id"}
 	creditOperationGrantGeneratedColumns      = []string{}
@@ -440,20 +448,20 @@ func (q creditOperationGrantQuery) Exists(ctx context.Context, exec boil.Context
 	return count > 0, nil
 }
 
-// Operation pointed to by the foreign key.
-func (o *CreditOperationGrant) Operation(mods ...qm.QueryMod) creditOperationQuery {
+// Grant pointed to by the foreign key.
+func (o *CreditOperationGrant) Grant(mods ...qm.QueryMod) creditGrantQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.OperationID),
+		qm.Where("\"id\" = ?", o.GrantID),
 	}
 
 	queryMods = append(queryMods, mods...)
 
-	return CreditOperations(queryMods...)
+	return CreditGrants(queryMods...)
 }
 
-// LoadOperation allows an eager lookup of values, cached into the
+// LoadGrant allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (creditOperationGrantL) LoadOperation(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCreditOperationGrant interface{}, mods queries.Applicator) error {
+func (creditOperationGrantL) LoadGrant(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCreditOperationGrant interface{}, mods queries.Applicator) error {
 	var slice []*CreditOperationGrant
 	var object *CreditOperationGrant
 
@@ -484,7 +492,7 @@ func (creditOperationGrantL) LoadOperation(ctx context.Context, e boil.ContextEx
 		if object.R == nil {
 			object.R = &creditOperationGrantR{}
 		}
-		args[object.OperationID] = struct{}{}
+		args[object.GrantID] = struct{}{}
 
 	} else {
 		for _, obj := range slice {
@@ -492,7 +500,7 @@ func (creditOperationGrantL) LoadOperation(ctx context.Context, e boil.ContextEx
 				obj.R = &creditOperationGrantR{}
 			}
 
-			args[obj.OperationID] = struct{}{}
+			args[obj.GrantID] = struct{}{}
 
 		}
 	}
@@ -509,8 +517,8 @@ func (creditOperationGrantL) LoadOperation(ctx context.Context, e boil.ContextEx
 	}
 
 	query := NewQuery(
-		qm.From(`credit_tracker.credit_operations`),
-		qm.WhereIn(`credit_tracker.credit_operations.id in ?`, argsSlice...),
+		qm.From(`credit_tracker.credit_grants`),
+		qm.WhereIn(`credit_tracker.credit_grants.id in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -518,22 +526,22 @@ func (creditOperationGrantL) LoadOperation(ctx context.Context, e boil.ContextEx
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load CreditOperation")
+		return errors.Wrap(err, "failed to eager load CreditGrant")
 	}
 
-	var resultSlice []*CreditOperation
+	var resultSlice []*CreditGrant
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice CreditOperation")
+		return errors.Wrap(err, "failed to bind eager loaded slice CreditGrant")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for credit_operations")
+		return errors.Wrap(err, "failed to close results of eager load for credit_grants")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for credit_operations")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for credit_grants")
 	}
 
-	if len(creditOperationAfterSelectHooks) != 0 {
+	if len(creditGrantAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -547,22 +555,22 @@ func (creditOperationGrantL) LoadOperation(ctx context.Context, e boil.ContextEx
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.Operation = foreign
+		object.R.Grant = foreign
 		if foreign.R == nil {
-			foreign.R = &creditOperationR{}
+			foreign.R = &creditGrantR{}
 		}
-		foreign.R.OperationCreditOperationGrants = append(foreign.R.OperationCreditOperationGrants, object)
+		foreign.R.GrantCreditOperationGrants = append(foreign.R.GrantCreditOperationGrants, object)
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.OperationID == foreign.ID {
-				local.R.Operation = foreign
+			if local.GrantID == foreign.ID {
+				local.R.Grant = foreign
 				if foreign.R == nil {
-					foreign.R = &creditOperationR{}
+					foreign.R = &creditGrantR{}
 				}
-				foreign.R.OperationCreditOperationGrants = append(foreign.R.OperationCreditOperationGrants, local)
+				foreign.R.GrantCreditOperationGrants = append(foreign.R.GrantCreditOperationGrants, local)
 				break
 			}
 		}
@@ -571,10 +579,10 @@ func (creditOperationGrantL) LoadOperation(ctx context.Context, e boil.ContextEx
 	return nil
 }
 
-// SetOperation of the creditOperationGrant to the related item.
-// Sets o.R.Operation to related.
-// Adds o to related.R.OperationCreditOperationGrants.
-func (o *CreditOperationGrant) SetOperation(ctx context.Context, exec boil.ContextExecutor, insert bool, related *CreditOperation) error {
+// SetGrant of the creditOperationGrant to the related item.
+// Sets o.R.Grant to related.
+// Adds o to related.R.GrantCreditOperationGrants.
+func (o *CreditOperationGrant) SetGrant(ctx context.Context, exec boil.ContextExecutor, insert bool, related *CreditGrant) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -584,7 +592,7 @@ func (o *CreditOperationGrant) SetOperation(ctx context.Context, exec boil.Conte
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"credit_tracker\".\"credit_operation_grants\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"operation_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"grant_id"}),
 		strmangle.WhereClause("\"", "\"", 2, creditOperationGrantPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -598,21 +606,21 @@ func (o *CreditOperationGrant) SetOperation(ctx context.Context, exec boil.Conte
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.OperationID = related.ID
+	o.GrantID = related.ID
 	if o.R == nil {
 		o.R = &creditOperationGrantR{
-			Operation: related,
+			Grant: related,
 		}
 	} else {
-		o.R.Operation = related
+		o.R.Grant = related
 	}
 
 	if related.R == nil {
-		related.R = &creditOperationR{
-			OperationCreditOperationGrants: CreditOperationGrantSlice{o},
+		related.R = &creditGrantR{
+			GrantCreditOperationGrants: CreditOperationGrantSlice{o},
 		}
 	} else {
-		related.R.OperationCreditOperationGrants = append(related.R.OperationCreditOperationGrants, o)
+		related.R.GrantCreditOperationGrants = append(related.R.GrantCreditOperationGrants, o)
 	}
 
 	return nil

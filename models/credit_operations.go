@@ -24,22 +24,18 @@ import (
 
 // CreditOperation is an object representing the database table.
 type CreditOperation struct {
-	// Unique operation identifier
-	ID string `boil:"id" json:"id" toml:"id" yaml:"id"`
+	// Which application made the request (e.g., telemetry-api, fetch-api)
+	AppName string `boil:"app_name" json:"app_name" toml:"app_name" yaml:"app_name"`
+	// External reference (API request ID, order ID, etc.)
+	ReferenceID string `boil:"reference_id" json:"reference_id" toml:"reference_id" yaml:"reference_id"`
+	// Type: deduction (deducts credits), refund (returns credits), grant_purchase (new grant), debt_settlement (settles previous debt)
+	OperationType string `boil:"operation_type" json:"operation_type" toml:"operation_type" yaml:"operation_type"`
 	// License that used the credits
 	LicenseID string `boil:"license_id" json:"license_id" toml:"license_id" yaml:"license_id"`
 	// Asset that was accessed
 	AssetDid string `boil:"asset_did" json:"asset_did" toml:"asset_did" yaml:"asset_did"`
-	// Type: deduction (deducts credits), refund (returns credits), grant_purchase (new grant), debt_settlement (settles previous debt)
-	OperationType string `boil:"operation_type" json:"operation_type" toml:"operation_type" yaml:"operation_type"`
 	// Total credits affected (negative for debit, positive for credit)
 	TotalAmount int64 `boil:"total_amount" json:"total_amount" toml:"total_amount" yaml:"total_amount"`
-	// Total balance for this license/asset after operation
-	BalanceAfter int64 `boil:"balance_after" json:"balance_after" toml:"balance_after" yaml:"balance_after"`
-	// Which API was called (e.g., telemetry, location)
-	APIEndpoint null.String `boil:"api_endpoint" json:"api_endpoint,omitempty" toml:"api_endpoint" yaml:"api_endpoint,omitempty"`
-	// External reference (API request ID, order ID, etc.)
-	ReferenceID null.String `boil:"reference_id" json:"reference_id,omitempty" toml:"reference_id" yaml:"reference_id,omitempty"`
 	// When this operation occurred
 	CreatedAt null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 
@@ -48,139 +44,67 @@ type CreditOperation struct {
 }
 
 var CreditOperationColumns = struct {
-	ID            string
+	AppName       string
+	ReferenceID   string
+	OperationType string
 	LicenseID     string
 	AssetDid      string
-	OperationType string
 	TotalAmount   string
-	BalanceAfter  string
-	APIEndpoint   string
-	ReferenceID   string
 	CreatedAt     string
 }{
-	ID:            "id",
+	AppName:       "app_name",
+	ReferenceID:   "reference_id",
+	OperationType: "operation_type",
 	LicenseID:     "license_id",
 	AssetDid:      "asset_did",
-	OperationType: "operation_type",
 	TotalAmount:   "total_amount",
-	BalanceAfter:  "balance_after",
-	APIEndpoint:   "api_endpoint",
-	ReferenceID:   "reference_id",
 	CreatedAt:     "created_at",
 }
 
 var CreditOperationTableColumns = struct {
-	ID            string
+	AppName       string
+	ReferenceID   string
+	OperationType string
 	LicenseID     string
 	AssetDid      string
-	OperationType string
 	TotalAmount   string
-	BalanceAfter  string
-	APIEndpoint   string
-	ReferenceID   string
 	CreatedAt     string
 }{
-	ID:            "credit_operations.id",
+	AppName:       "credit_operations.app_name",
+	ReferenceID:   "credit_operations.reference_id",
+	OperationType: "credit_operations.operation_type",
 	LicenseID:     "credit_operations.license_id",
 	AssetDid:      "credit_operations.asset_did",
-	OperationType: "credit_operations.operation_type",
 	TotalAmount:   "credit_operations.total_amount",
-	BalanceAfter:  "credit_operations.balance_after",
-	APIEndpoint:   "credit_operations.api_endpoint",
-	ReferenceID:   "credit_operations.reference_id",
 	CreatedAt:     "credit_operations.created_at",
 }
 
 // Generated where
 
-type whereHelpernull_String struct{ field string }
-
-func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-func (w whereHelpernull_String) LIKE(x null.String) qm.QueryMod {
-	return qm.Where(w.field+" LIKE ?", x)
-}
-func (w whereHelpernull_String) NLIKE(x null.String) qm.QueryMod {
-	return qm.Where(w.field+" NOT LIKE ?", x)
-}
-func (w whereHelpernull_String) ILIKE(x null.String) qm.QueryMod {
-	return qm.Where(w.field+" ILIKE ?", x)
-}
-func (w whereHelpernull_String) NILIKE(x null.String) qm.QueryMod {
-	return qm.Where(w.field+" NOT ILIKE ?", x)
-}
-func (w whereHelpernull_String) SIMILAR(x null.String) qm.QueryMod {
-	return qm.Where(w.field+" SIMILAR TO ?", x)
-}
-func (w whereHelpernull_String) NSIMILAR(x null.String) qm.QueryMod {
-	return qm.Where(w.field+" NOT SIMILAR TO ?", x)
-}
-func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
 var CreditOperationWhere = struct {
-	ID            whereHelperstring
+	AppName       whereHelperstring
+	ReferenceID   whereHelperstring
+	OperationType whereHelperstring
 	LicenseID     whereHelperstring
 	AssetDid      whereHelperstring
-	OperationType whereHelperstring
 	TotalAmount   whereHelperint64
-	BalanceAfter  whereHelperint64
-	APIEndpoint   whereHelpernull_String
-	ReferenceID   whereHelpernull_String
 	CreatedAt     whereHelpernull_Time
 }{
-	ID:            whereHelperstring{field: "\"credit_tracker\".\"credit_operations\".\"id\""},
+	AppName:       whereHelperstring{field: "\"credit_tracker\".\"credit_operations\".\"app_name\""},
+	ReferenceID:   whereHelperstring{field: "\"credit_tracker\".\"credit_operations\".\"reference_id\""},
+	OperationType: whereHelperstring{field: "\"credit_tracker\".\"credit_operations\".\"operation_type\""},
 	LicenseID:     whereHelperstring{field: "\"credit_tracker\".\"credit_operations\".\"license_id\""},
 	AssetDid:      whereHelperstring{field: "\"credit_tracker\".\"credit_operations\".\"asset_did\""},
-	OperationType: whereHelperstring{field: "\"credit_tracker\".\"credit_operations\".\"operation_type\""},
 	TotalAmount:   whereHelperint64{field: "\"credit_tracker\".\"credit_operations\".\"total_amount\""},
-	BalanceAfter:  whereHelperint64{field: "\"credit_tracker\".\"credit_operations\".\"balance_after\""},
-	APIEndpoint:   whereHelpernull_String{field: "\"credit_tracker\".\"credit_operations\".\"api_endpoint\""},
-	ReferenceID:   whereHelpernull_String{field: "\"credit_tracker\".\"credit_operations\".\"reference_id\""},
 	CreatedAt:     whereHelpernull_Time{field: "\"credit_tracker\".\"credit_operations\".\"created_at\""},
 }
 
 // CreditOperationRels is where relationship names are stored.
 var CreditOperationRels = struct {
-	OperationCreditOperationGrants string
-}{
-	OperationCreditOperationGrants: "OperationCreditOperationGrants",
-}
+}{}
 
 // creditOperationR is where relationships are stored.
 type creditOperationR struct {
-	OperationCreditOperationGrants CreditOperationGrantSlice `boil:"OperationCreditOperationGrants" json:"OperationCreditOperationGrants" toml:"OperationCreditOperationGrants" yaml:"OperationCreditOperationGrants"`
 }
 
 // NewStruct creates a new relationship struct
@@ -188,30 +112,14 @@ func (*creditOperationR) NewStruct() *creditOperationR {
 	return &creditOperationR{}
 }
 
-func (o *CreditOperation) GetOperationCreditOperationGrants() CreditOperationGrantSlice {
-	if o == nil {
-		return nil
-	}
-
-	return o.R.GetOperationCreditOperationGrants()
-}
-
-func (r *creditOperationR) GetOperationCreditOperationGrants() CreditOperationGrantSlice {
-	if r == nil {
-		return nil
-	}
-
-	return r.OperationCreditOperationGrants
-}
-
 // creditOperationL is where Load methods for each relationship are stored.
 type creditOperationL struct{}
 
 var (
-	creditOperationAllColumns            = []string{"id", "license_id", "asset_did", "operation_type", "total_amount", "balance_after", "api_endpoint", "reference_id", "created_at"}
-	creditOperationColumnsWithoutDefault = []string{"license_id", "asset_did", "operation_type", "total_amount", "balance_after"}
-	creditOperationColumnsWithDefault    = []string{"id", "api_endpoint", "reference_id", "created_at"}
-	creditOperationPrimaryKeyColumns     = []string{"id"}
+	creditOperationAllColumns            = []string{"app_name", "reference_id", "operation_type", "license_id", "asset_did", "total_amount", "created_at"}
+	creditOperationColumnsWithoutDefault = []string{"app_name", "reference_id", "operation_type", "license_id", "asset_did", "total_amount"}
+	creditOperationColumnsWithDefault    = []string{"created_at"}
+	creditOperationPrimaryKeyColumns     = []string{"app_name", "reference_id", "operation_type"}
 	creditOperationGeneratedColumns      = []string{}
 )
 
@@ -520,186 +428,6 @@ func (q creditOperationQuery) Exists(ctx context.Context, exec boil.ContextExecu
 	return count > 0, nil
 }
 
-// OperationCreditOperationGrants retrieves all the credit_operation_grant's CreditOperationGrants with an executor via operation_id column.
-func (o *CreditOperation) OperationCreditOperationGrants(mods ...qm.QueryMod) creditOperationGrantQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("\"credit_tracker\".\"credit_operation_grants\".\"operation_id\"=?", o.ID),
-	)
-
-	return CreditOperationGrants(queryMods...)
-}
-
-// LoadOperationCreditOperationGrants allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (creditOperationL) LoadOperationCreditOperationGrants(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCreditOperation interface{}, mods queries.Applicator) error {
-	var slice []*CreditOperation
-	var object *CreditOperation
-
-	if singular {
-		var ok bool
-		object, ok = maybeCreditOperation.(*CreditOperation)
-		if !ok {
-			object = new(CreditOperation)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeCreditOperation)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCreditOperation))
-			}
-		}
-	} else {
-		s, ok := maybeCreditOperation.(*[]*CreditOperation)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeCreditOperation)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCreditOperation))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &creditOperationR{}
-		}
-		args[object.ID] = struct{}{}
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &creditOperationR{}
-			}
-			args[obj.ID] = struct{}{}
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`credit_tracker.credit_operation_grants`),
-		qm.WhereIn(`credit_tracker.credit_operation_grants.operation_id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load credit_operation_grants")
-	}
-
-	var resultSlice []*CreditOperationGrant
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice credit_operation_grants")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on credit_operation_grants")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for credit_operation_grants")
-	}
-
-	if len(creditOperationGrantAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.OperationCreditOperationGrants = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &creditOperationGrantR{}
-			}
-			foreign.R.Operation = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.OperationID {
-				local.R.OperationCreditOperationGrants = append(local.R.OperationCreditOperationGrants, foreign)
-				if foreign.R == nil {
-					foreign.R = &creditOperationGrantR{}
-				}
-				foreign.R.Operation = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// AddOperationCreditOperationGrants adds the given related objects to the existing relationships
-// of the credit_operation, optionally inserting them as new records.
-// Appends related to o.R.OperationCreditOperationGrants.
-// Sets related.R.Operation appropriately.
-func (o *CreditOperation) AddOperationCreditOperationGrants(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*CreditOperationGrant) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.OperationID = o.ID
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"credit_tracker\".\"credit_operation_grants\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"operation_id"}),
-				strmangle.WhereClause("\"", "\"", 2, creditOperationGrantPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.OperationID = o.ID
-		}
-	}
-
-	if o.R == nil {
-		o.R = &creditOperationR{
-			OperationCreditOperationGrants: related,
-		}
-	} else {
-		o.R.OperationCreditOperationGrants = append(o.R.OperationCreditOperationGrants, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &creditOperationGrantR{
-				Operation: o,
-			}
-		} else {
-			rel.R.Operation = o
-		}
-	}
-	return nil
-}
-
 // CreditOperations retrieves all the records using an executor.
 func CreditOperations(mods ...qm.QueryMod) creditOperationQuery {
 	mods = append(mods, qm.From("\"credit_tracker\".\"credit_operations\""))
@@ -713,7 +441,7 @@ func CreditOperations(mods ...qm.QueryMod) creditOperationQuery {
 
 // FindCreditOperation retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindCreditOperation(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*CreditOperation, error) {
+func FindCreditOperation(ctx context.Context, exec boil.ContextExecutor, appName string, referenceID string, operationType string, selectCols ...string) (*CreditOperation, error) {
 	creditOperationObj := &CreditOperation{}
 
 	sel := "*"
@@ -721,10 +449,10 @@ func FindCreditOperation(ctx context.Context, exec boil.ContextExecutor, iD stri
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"credit_tracker\".\"credit_operations\" where \"id\"=$1", sel,
+		"select %s from \"credit_tracker\".\"credit_operations\" where \"app_name\"=$1 AND \"reference_id\"=$2 AND \"operation_type\"=$3", sel,
 	)
 
-	q := queries.Raw(query, iD)
+	q := queries.Raw(query, appName, referenceID, operationType)
 
 	err := q.Bind(ctx, exec, creditOperationObj)
 	if err != nil {
@@ -1096,7 +824,7 @@ func (o *CreditOperation) Delete(ctx context.Context, exec boil.ContextExecutor)
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), creditOperationPrimaryKeyMapping)
-	sql := "DELETE FROM \"credit_tracker\".\"credit_operations\" WHERE \"id\"=$1"
+	sql := "DELETE FROM \"credit_tracker\".\"credit_operations\" WHERE \"app_name\"=$1 AND \"reference_id\"=$2 AND \"operation_type\"=$3"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1193,7 +921,7 @@ func (o CreditOperationSlice) DeleteAll(ctx context.Context, exec boil.ContextEx
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *CreditOperation) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindCreditOperation(ctx, exec, o.ID)
+	ret, err := FindCreditOperation(ctx, exec, o.AppName, o.ReferenceID, o.OperationType)
 	if err != nil {
 		return err
 	}
@@ -1232,16 +960,16 @@ func (o *CreditOperationSlice) ReloadAll(ctx context.Context, exec boil.ContextE
 }
 
 // CreditOperationExists checks if the CreditOperation row exists.
-func CreditOperationExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
+func CreditOperationExists(ctx context.Context, exec boil.ContextExecutor, appName string, referenceID string, operationType string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"credit_tracker\".\"credit_operations\" where \"id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"credit_tracker\".\"credit_operations\" where \"app_name\"=$1 AND \"reference_id\"=$2 AND \"operation_type\"=$3 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, iD)
+		fmt.Fprintln(writer, appName, referenceID, operationType)
 	}
-	row := exec.QueryRowContext(ctx, sql, iD)
+	row := exec.QueryRowContext(ctx, sql, appName, referenceID, operationType)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1253,5 +981,5 @@ func CreditOperationExists(ctx context.Context, exec boil.ContextExecutor, iD st
 
 // Exists checks if the CreditOperation row exists.
 func (o *CreditOperation) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return CreditOperationExists(ctx, exec, o.ID)
+	return CreditOperationExists(ctx, exec, o.AppName, o.ReferenceID, o.OperationType)
 }

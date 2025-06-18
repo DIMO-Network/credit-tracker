@@ -24,10 +24,11 @@ import (
 
 // CreditGrant is an object representing the database table.
 type CreditGrant struct {
+	ID string `boil:"id" json:"id" toml:"id" yaml:"id"`
 	// Blockchain transaction hash (0x...)
 	TXHash string `boil:"tx_hash" json:"tx_hash" toml:"tx_hash" yaml:"tx_hash"`
 	// Event log index within the transaction
-	LogIndex int `boil:"log_index" json:"log_index" toml:"log_index" yaml:"log_index"`
+	LogIndex null.Int `boil:"log_index" json:"log_index,omitempty" toml:"log_index" yaml:"log_index,omitempty"`
 	// License identifier: Ethereum address or string ID
 	LicenseID string `boil:"license_id" json:"license_id" toml:"license_id" yaml:"license_id"`
 	// DID string identifying the physical asset/device
@@ -52,6 +53,7 @@ type CreditGrant struct {
 }
 
 var CreditGrantColumns = struct {
+	ID              string
 	TXHash          string
 	LogIndex        string
 	LicenseID       string
@@ -64,6 +66,7 @@ var CreditGrantColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 }{
+	ID:              "id",
 	TXHash:          "tx_hash",
 	LogIndex:        "log_index",
 	LicenseID:       "license_id",
@@ -78,6 +81,7 @@ var CreditGrantColumns = struct {
 }
 
 var CreditGrantTableColumns = struct {
+	ID              string
 	TXHash          string
 	LogIndex        string
 	LicenseID       string
@@ -90,6 +94,7 @@ var CreditGrantTableColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 }{
+	ID:              "credit_grants.id",
 	TXHash:          "credit_grants.tx_hash",
 	LogIndex:        "credit_grants.log_index",
 	LicenseID:       "credit_grants.license_id",
@@ -136,28 +141,43 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelperint struct{ field string }
+type whereHelpernull_Int struct{ field string }
 
-func (w whereHelperint) EQ(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperint) NEQ(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperint) LT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperint) LTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperint) GT(x int) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperint) GTE(x int) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperint) IN(slice []int) qm.QueryMod {
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
 	}
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
-func (w whereHelperint) NIN(slice []int) qm.QueryMod {
+func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
 	values := make([]interface{}, 0, len(slice))
 	for _, value := range slice {
 		values = append(values, value)
 	}
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 type whereHelperint64 struct{ field string }
 
@@ -266,8 +286,9 @@ func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var CreditGrantWhere = struct {
+	ID              whereHelperstring
 	TXHash          whereHelperstring
-	LogIndex        whereHelperint
+	LogIndex        whereHelpernull_Int
 	LicenseID       whereHelperstring
 	AssetDid        whereHelperstring
 	InitialAmount   whereHelperint64
@@ -278,8 +299,9 @@ var CreditGrantWhere = struct {
 	CreatedAt       whereHelpernull_Time
 	UpdatedAt       whereHelpernull_Time
 }{
+	ID:              whereHelperstring{field: "\"credit_tracker\".\"credit_grants\".\"id\""},
 	TXHash:          whereHelperstring{field: "\"credit_tracker\".\"credit_grants\".\"tx_hash\""},
-	LogIndex:        whereHelperint{field: "\"credit_tracker\".\"credit_grants\".\"log_index\""},
+	LogIndex:        whereHelpernull_Int{field: "\"credit_tracker\".\"credit_grants\".\"log_index\""},
 	LicenseID:       whereHelperstring{field: "\"credit_tracker\".\"credit_grants\".\"license_id\""},
 	AssetDid:        whereHelperstring{field: "\"credit_tracker\".\"credit_grants\".\"asset_did\""},
 	InitialAmount:   whereHelperint64{field: "\"credit_tracker\".\"credit_grants\".\"initial_amount\""},
@@ -293,10 +315,14 @@ var CreditGrantWhere = struct {
 
 // CreditGrantRels is where relationship names are stored.
 var CreditGrantRels = struct {
-}{}
+	GrantCreditOperationGrants string
+}{
+	GrantCreditOperationGrants: "GrantCreditOperationGrants",
+}
 
 // creditGrantR is where relationships are stored.
 type creditGrantR struct {
+	GrantCreditOperationGrants CreditOperationGrantSlice `boil:"GrantCreditOperationGrants" json:"GrantCreditOperationGrants" toml:"GrantCreditOperationGrants" yaml:"GrantCreditOperationGrants"`
 }
 
 // NewStruct creates a new relationship struct
@@ -304,14 +330,30 @@ func (*creditGrantR) NewStruct() *creditGrantR {
 	return &creditGrantR{}
 }
 
+func (o *CreditGrant) GetGrantCreditOperationGrants() CreditOperationGrantSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetGrantCreditOperationGrants()
+}
+
+func (r *creditGrantR) GetGrantCreditOperationGrants() CreditOperationGrantSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.GrantCreditOperationGrants
+}
+
 // creditGrantL is where Load methods for each relationship are stored.
 type creditGrantL struct{}
 
 var (
-	creditGrantAllColumns            = []string{"tx_hash", "log_index", "license_id", "asset_did", "initial_amount", "remaining_amount", "expires_at", "block_number", "status", "created_at", "updated_at"}
-	creditGrantColumnsWithoutDefault = []string{"tx_hash", "log_index", "license_id", "asset_did", "initial_amount", "remaining_amount", "expires_at"}
-	creditGrantColumnsWithDefault    = []string{"block_number", "status", "created_at", "updated_at"}
-	creditGrantPrimaryKeyColumns     = []string{"tx_hash", "log_index"}
+	creditGrantAllColumns            = []string{"id", "tx_hash", "log_index", "license_id", "asset_did", "initial_amount", "remaining_amount", "expires_at", "block_number", "status", "created_at", "updated_at"}
+	creditGrantColumnsWithoutDefault = []string{"tx_hash", "license_id", "asset_did", "initial_amount", "remaining_amount", "expires_at"}
+	creditGrantColumnsWithDefault    = []string{"id", "log_index", "block_number", "status", "created_at", "updated_at"}
+	creditGrantPrimaryKeyColumns     = []string{"id"}
 	creditGrantGeneratedColumns      = []string{}
 )
 
@@ -620,6 +662,186 @@ func (q creditGrantQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 	return count > 0, nil
 }
 
+// GrantCreditOperationGrants retrieves all the credit_operation_grant's CreditOperationGrants with an executor via grant_id column.
+func (o *CreditGrant) GrantCreditOperationGrants(mods ...qm.QueryMod) creditOperationGrantQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"credit_tracker\".\"credit_operation_grants\".\"grant_id\"=?", o.ID),
+	)
+
+	return CreditOperationGrants(queryMods...)
+}
+
+// LoadGrantCreditOperationGrants allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (creditGrantL) LoadGrantCreditOperationGrants(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCreditGrant interface{}, mods queries.Applicator) error {
+	var slice []*CreditGrant
+	var object *CreditGrant
+
+	if singular {
+		var ok bool
+		object, ok = maybeCreditGrant.(*CreditGrant)
+		if !ok {
+			object = new(CreditGrant)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeCreditGrant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCreditGrant))
+			}
+		}
+	} else {
+		s, ok := maybeCreditGrant.(*[]*CreditGrant)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeCreditGrant)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCreditGrant))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &creditGrantR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &creditGrantR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`credit_tracker.credit_operation_grants`),
+		qm.WhereIn(`credit_tracker.credit_operation_grants.grant_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load credit_operation_grants")
+	}
+
+	var resultSlice []*CreditOperationGrant
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice credit_operation_grants")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on credit_operation_grants")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for credit_operation_grants")
+	}
+
+	if len(creditOperationGrantAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.GrantCreditOperationGrants = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &creditOperationGrantR{}
+			}
+			foreign.R.Grant = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.GrantID {
+				local.R.GrantCreditOperationGrants = append(local.R.GrantCreditOperationGrants, foreign)
+				if foreign.R == nil {
+					foreign.R = &creditOperationGrantR{}
+				}
+				foreign.R.Grant = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddGrantCreditOperationGrants adds the given related objects to the existing relationships
+// of the credit_grant, optionally inserting them as new records.
+// Appends related to o.R.GrantCreditOperationGrants.
+// Sets related.R.Grant appropriately.
+func (o *CreditGrant) AddGrantCreditOperationGrants(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*CreditOperationGrant) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.GrantID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"credit_tracker\".\"credit_operation_grants\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"grant_id"}),
+				strmangle.WhereClause("\"", "\"", 2, creditOperationGrantPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.GrantID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &creditGrantR{
+			GrantCreditOperationGrants: related,
+		}
+	} else {
+		o.R.GrantCreditOperationGrants = append(o.R.GrantCreditOperationGrants, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &creditOperationGrantR{
+				Grant: o,
+			}
+		} else {
+			rel.R.Grant = o
+		}
+	}
+	return nil
+}
+
 // CreditGrants retrieves all the records using an executor.
 func CreditGrants(mods ...qm.QueryMod) creditGrantQuery {
 	mods = append(mods, qm.From("\"credit_tracker\".\"credit_grants\""))
@@ -633,7 +855,7 @@ func CreditGrants(mods ...qm.QueryMod) creditGrantQuery {
 
 // FindCreditGrant retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindCreditGrant(ctx context.Context, exec boil.ContextExecutor, tXHash string, logIndex int, selectCols ...string) (*CreditGrant, error) {
+func FindCreditGrant(ctx context.Context, exec boil.ContextExecutor, iD string, selectCols ...string) (*CreditGrant, error) {
 	creditGrantObj := &CreditGrant{}
 
 	sel := "*"
@@ -641,10 +863,10 @@ func FindCreditGrant(ctx context.Context, exec boil.ContextExecutor, tXHash stri
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"credit_tracker\".\"credit_grants\" where \"tx_hash\"=$1 AND \"log_index\"=$2", sel,
+		"select %s from \"credit_tracker\".\"credit_grants\" where \"id\"=$1", sel,
 	)
 
-	q := queries.Raw(query, tXHash, logIndex)
+	q := queries.Raw(query, iD)
 
 	err := q.Bind(ctx, exec, creditGrantObj)
 	if err != nil {
@@ -1026,7 +1248,7 @@ func (o *CreditGrant) Delete(ctx context.Context, exec boil.ContextExecutor) (in
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), creditGrantPrimaryKeyMapping)
-	sql := "DELETE FROM \"credit_tracker\".\"credit_grants\" WHERE \"tx_hash\"=$1 AND \"log_index\"=$2"
+	sql := "DELETE FROM \"credit_tracker\".\"credit_grants\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1123,7 +1345,7 @@ func (o CreditGrantSlice) DeleteAll(ctx context.Context, exec boil.ContextExecut
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *CreditGrant) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindCreditGrant(ctx, exec, o.TXHash, o.LogIndex)
+	ret, err := FindCreditGrant(ctx, exec, o.ID)
 	if err != nil {
 		return err
 	}
@@ -1162,16 +1384,16 @@ func (o *CreditGrantSlice) ReloadAll(ctx context.Context, exec boil.ContextExecu
 }
 
 // CreditGrantExists checks if the CreditGrant row exists.
-func CreditGrantExists(ctx context.Context, exec boil.ContextExecutor, tXHash string, logIndex int) (bool, error) {
+func CreditGrantExists(ctx context.Context, exec boil.ContextExecutor, iD string) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"credit_tracker\".\"credit_grants\" where \"tx_hash\"=$1 AND \"log_index\"=$2 limit 1)"
+	sql := "select exists(select 1 from \"credit_tracker\".\"credit_grants\" where \"id\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, tXHash, logIndex)
+		fmt.Fprintln(writer, iD)
 	}
-	row := exec.QueryRowContext(ctx, sql, tXHash, logIndex)
+	row := exec.QueryRowContext(ctx, sql, iD)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1183,5 +1405,5 @@ func CreditGrantExists(ctx context.Context, exec boil.ContextExecutor, tXHash st
 
 // Exists checks if the CreditGrant row exists.
 func (o *CreditGrant) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return CreditGrantExists(ctx, exec, o.TXHash, o.LogIndex)
+	return CreditGrantExists(ctx, exec, o.ID)
 }
