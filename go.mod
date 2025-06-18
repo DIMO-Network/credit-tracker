@@ -2,13 +2,9 @@ module github.com/DIMO-Network/credit-tracker
 
 go 1.24
 
-replace github.com/DIMO-Network/shared => ../shared
-
-replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20250603155806-513f23925822
-
 require (
 	github.com/DIMO-Network/cloudevent v0.1.0
-	github.com/DIMO-Network/shared v1.0.3
+	github.com/DIMO-Network/shared v1.0.4
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/ethereum/go-ethereum v1.15.11
 	github.com/friendsofgo/errors v0.9.2
@@ -31,9 +27,9 @@ require (
 	github.com/volatiletech/null/v8 v8.1.2
 	github.com/volatiletech/sqlboiler/v4 v4.19.0
 	github.com/volatiletech/strmangle v0.0.7-0.20240503230658-86517898275a
-	golang.org/x/sync v0.14.0
+	golang.org/x/sync v0.15.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822
-	google.golang.org/grpc v1.72.2
+	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -86,6 +82,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
@@ -177,10 +174,10 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
-	golang.org/x/mod v0.24.0 // indirect
+	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
