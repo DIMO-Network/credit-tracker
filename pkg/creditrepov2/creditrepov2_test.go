@@ -44,8 +44,8 @@ func teardownIfLastTest(t *testing.T) {
 		if refs != 0 {
 			return
 		}
-		globalTestContainer.container.Terminate(context.Background())
-		globalTestContainer.db.Close()
+		_ = globalTestContainer.container.Terminate(context.Background())
+		_ = globalTestContainer.db.Close()
 	})
 }
 
@@ -232,7 +232,7 @@ func TestDeductCredits(t *testing.T) {
 		// Test: Try to deduct credits
 		err = repo.DeductCredits(ctx, licenseID, testAssetID, apiCost, testAPIEndpoint, uuid.NewString())
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "Outstanding debt")
+		assert.Contains(t, err.Error(), "outstanding debt")
 	})
 
 	t.Run("deduction with expired grant", func(t *testing.T) {
@@ -931,7 +931,7 @@ func TestConfirmGrant(t *testing.T) {
 		assert.Equal(t, 1, grant.LogIndex.Int)
 		assert.Equal(t, defaultGrantAmount, grant.InitialAmount)
 		assert.Equal(t, defaultGrantAmount, grant.RemainingAmount)
-		assert.Equal(t, getExpirationDate(mintTime), grant.ExpiresAt.UTC())
+		assert.Equal(t, getExpirationDate(mintTime).Truncate(time.Millisecond), grant.ExpiresAt.UTC().Truncate(time.Millisecond))
 
 		// Verify: Check operation record
 		operation, err := models.CreditOperations(
@@ -973,7 +973,7 @@ func TestConfirmGrant(t *testing.T) {
 		assert.Equal(t, 1, grant.LogIndex.Int)
 		assert.Equal(t, defaultGrantAmount, grant.InitialAmount)
 		assert.Equal(t, defaultGrantAmount, grant.RemainingAmount)
-		assert.Equal(t, getExpirationDate(mintTime), grant.ExpiresAt.UTC())
+		assert.Equal(t, getExpirationDate(mintTime).Truncate(time.Millisecond), grant.ExpiresAt.UTC().Truncate(time.Millisecond))
 
 		// Test: Try to confirm again
 		err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, defaultGrantAmount, mintTime)

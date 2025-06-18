@@ -56,7 +56,7 @@ func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID stri
 	}
 
 	if debt > 0 {
-		return fmt.Errorf("cannot use credits. Outstanding debt: %d. Please add credits to clear debt first.", debt)
+		return fmt.Errorf("cannot use credits, while there is outstanding debt: %d. Please add credits to clear debt first", debt)
 	}
 
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
@@ -65,7 +65,7 @@ func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID stri
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer rollbackTx(ctx, tx)
 
 	// Calculate current available balance from active grants only
 	grants, err := r.getActiveGrants(ctx, tx, licenseID, assetDID)
@@ -155,7 +155,7 @@ func (r *Repository) RefundCredits(ctx context.Context, appName, referenceID str
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer rollbackTx(ctx, tx)
 
 	// Get grants used in the original operation.
 	grants, deductOp, err := r.getGrantsFromOperation(ctx, tx, referenceID, appName)
@@ -185,7 +185,12 @@ func (r *Repository) RefundCredits(ctx context.Context, appName, referenceID str
 		}
 		grantRefundAmount := -opGrant.AmountUsed
 		// Update grant
-		grant.RemainingAmount += grantRefundAmount
+		newAmount := grant.RemainingAmount + grantRefundAmount
+		if newAmount < grant.RemainingAmount {
+			// integer overflow unexpected but can't hurt to check
+			return fmt.Errorf("grant refund would cause integer overflow")
+		}
+		grant.RemainingAmount = newAmount
 		grant.UpdatedAt = null.TimeFrom(time.Now())
 		if _, err := grant.Update(ctx, tx, boil.Whitelist(models.CreditGrantColumns.RemainingAmount, models.CreditGrantColumns.UpdatedAt)); err != nil {
 			return fmt.Errorf("failed to update grant %s: %w", grant.TXHash, err)
@@ -236,7 +241,7 @@ func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer rollbackTx(ctx, tx)
 
 	// Create grant record
 	grant := &models.CreditGrant{
@@ -301,7 +306,7 @@ func (r *Repository) ConfirmGrant(ctx context.Context, licenseID, assetDID strin
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer rollbackTx(ctx, tx)
 
 	// get the oldest pending grant that matches the given parameters
 	grant, err := models.CreditGrants(
@@ -554,7 +559,12 @@ func (r *Repository) settleDebt(ctx context.Context, tx *sql.Tx, licenseID, asse
 
 		// If we were able to settle any amount, update the failed grant
 		amountSettled := grantDebt - remainingToSettle
-		failedGrant.RemainingAmount += amountSettled
+		newAmount := failedGrant.RemainingAmount + amountSettled
+		if newAmount < failedGrant.RemainingAmount {
+			// integer overflow unexpected but can't hurt to check
+			return fmt.Errorf("debt settlement would cause integer overflow for grant %s", failedGrant.ID)
+		}
+		failedGrant.RemainingAmount = newAmount
 		failedGrant.UpdatedAt = null.TimeFrom(time.Now())
 		if _, err := failedGrant.Update(ctx, tx, boil.Whitelist(models.CreditGrantColumns.RemainingAmount, models.CreditGrantColumns.UpdatedAt)); err != nil {
 			return fmt.Errorf("failed to update failed grant %s: %w", failedGrant.TXHash, err)
@@ -608,7 +618,25 @@ func (r *Repository) getGrantsFromOperation(ctx context.Context, tx *sql.Tx, ref
 	return operationGrants, operation, nil
 }
 
-// expire in 31 days
+// expire on the same date in the next month
 func getExpirationDate(mintTime time.Time) time.Time {
-	return mintTime.UTC().Add(31 * 24 * time.Hour)
+	mintTime = mintTime.UTC()
+	currentMonth := mintTime.Month()
+	currentYear := mintTime.Year()
+	currentDay := mintTime.Day()
+	nextMonth := currentMonth + 1
+	nextYear := currentYear
+	if nextMonth > 12 {
+		nextMonth = 1
+		nextYear = currentYear + 1
+	}
+	expTime := time.Date(nextYear, nextMonth, currentDay, mintTime.Hour(), mintTime.Minute(), mintTime.Second(), mintTime.Nanosecond(), mintTime.Location())
+	return expTime
+}
+
+// rollbackTx is a helper function to handle transaction rollback with error checking
+func rollbackTx(ctx context.Context, tx *sql.Tx) {
+	if err := tx.Rollback(); err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
+	}
 }
