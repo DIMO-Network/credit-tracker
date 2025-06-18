@@ -140,7 +140,6 @@ SELECT 'down SQL query';
 DROP TABLE credit_grants;
 DROP TABLE credit_operations;
 DROP TABLE credit_operation_grants;
--- DROP INDEX idx_credit_grants_license_asset;
 DROP INDEX idx_credit_grants_active;
 DROP INDEX idx_credit_grants_block;
 DROP INDEX idx_credit_grants_debt;
