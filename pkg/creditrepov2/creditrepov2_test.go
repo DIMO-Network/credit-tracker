@@ -3,6 +3,8 @@ package creditrepo
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -13,6 +15,7 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -424,6 +427,12 @@ func TestDeductCredits(t *testing.T) {
 
 		err = repo.DeductCredits(ctx, licenseID, testAssetID, apiCost, testAPIEndpoint, referenceID)
 		require.Error(t, err)
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			fmt.Printf("%s: As PostgreSQL error: %#v\n", licenseID, pqErr)
+		} else {
+			fmt.Printf("%s: PostgreSQL error: %#v\n", licenseID, err)
+		}
 
 		// Verify: Grant should be unchanged
 		grant, err = models.CreditGrants(
@@ -727,6 +736,12 @@ func TestRefundCredits(t *testing.T) {
 
 		err = repo.RefundCredits(ctx, testAPIEndpoint, referenceID)
 		require.Error(t, err)
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			fmt.Printf("%s: As PostgreSQL error: %#v\n", licenseID, pqErr)
+		} else {
+			fmt.Printf("%s: PostgreSQL error: %#v\n", licenseID, err)
+		}
 
 		grant, err = models.CreditGrants(
 			models.CreditGrantWhere.ID.EQ(grant.ID),
@@ -978,6 +993,12 @@ func TestConfirmGrant(t *testing.T) {
 		// Test: Try to confirm again
 		err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, defaultGrantAmount, mintTime)
 		require.Error(t, err)
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			fmt.Printf("%s: As PostgreSQL error: %#v\n", licenseID, pqErr)
+		} else {
+			fmt.Printf("%s: PostgreSQL error: %#v\n", licenseID, err)
+		}
 
 		// Verify: Grant should be updated with new log index
 		grants, err := models.CreditGrants(

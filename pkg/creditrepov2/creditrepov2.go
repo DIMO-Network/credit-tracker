@@ -95,6 +95,10 @@ func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID stri
 	}
 
 	if err := operation.Insert(ctx, tx, boil.Infer()); err != nil {
+		if IsDuplicateKeyError(err) {
+			// TODO: Need to get this to the gRPC caller
+			return fmt.Errorf("operation already exists: %w", err)
+		}
 		return fmt.Errorf("failed to create operation record: %w", err)
 	}
 
@@ -175,6 +179,10 @@ func (r *Repository) RefundCredits(ctx context.Context, appName, referenceID str
 	}
 
 	if err := operation.Insert(ctx, tx, boil.Infer()); err != nil {
+		if IsDuplicateKeyError(err) {
+			// TODO: Need to get this to the gRPC caller
+			return fmt.Errorf("operation already exists: %w", err)
+		}
 		return fmt.Errorf("failed to create operation record: %w", err)
 	}
 
