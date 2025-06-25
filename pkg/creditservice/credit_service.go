@@ -62,11 +62,14 @@ func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.Cred
 	// First attempt to deduct credits
 	newCredits, err := s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, -req.Amount)
 	for errors.Is(err, creditrepo.InsufficientCreditsErr) {
-		newCredits, err = s.addBurnCredits(ctx, req.DeveloperLicense, req.AssetDid)
+		_, err = s.addBurnCredits(ctx, req.DeveloperLicense, req.AssetDid)
 		if err != nil {
 			return nil, status.Error(codes.Internal, "Failed to add credits after burn")
 		}
 		newCredits, err = s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, -req.Amount)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "Failed to update credits")
+		}
 	}
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to update credits")

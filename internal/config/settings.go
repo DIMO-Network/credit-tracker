@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/caarlos0/env/v11"
 	"github.com/ethereum/go-ethereum/common"
 	"gopkg.in/yaml.v3"
@@ -19,6 +20,7 @@ type Settings struct {
 	JWKKeySetURL              string         `env:"JWT_KEY_SET_URL"`
 	DIMORegistryChainID       uint64         `env:"DIMO_REGISTRY_CHAIN_ID"`
 	VehicleNFTContractAddress common.Address `env:"VEHICLE_NFT_CONTRACT_ADDRESS"`
+	DB                        db.Settings    `envPrefix:"DB_"`
 }
 
 func LoadSettings(filePath string) (*Settings, error) {

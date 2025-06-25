@@ -2,7 +2,8 @@
 
 SHELL := /bin/bash
 PATHINSTBIN = $(abspath ./bin)
-export PATH := $(PATHINSTBIN):$(PATH)
+SCRIPTS_DIR = $(abspath ./scripts)
+export PATH := $(PATHINSTBIN):$(SCRIPTS_DIR):$(PATH)
 
 BIN_NAME					?= credit-tracker
 DEFAULT_INSTALL_DIR			:= $(go env GOPATH)/$(PATHINSTBIN)
@@ -77,20 +78,10 @@ endif
 	mv $(PATHINSTBIN)/protoclib/include $(PATHINSTBIN)/ 
 	rm $(PATHINSTBIN)/protoc.zip
 
-tools-protoc-gen-go:
-	@mkdir -p $(PATHINSTBIN)
-	rm -f $(PATHINSTBIN)/protoc-gen-go
-	curl -L https://github.com/protocolbuffers/protobuf-go/releases/download/${PROTOC_GEN_GO_VERSION}/protoc-gen-go.${PROTOC_GEN_GO_VERSION}.$(shell uname | tr A-Z a-z).amd64.tar.gz | tar -zOxf - protoc-gen-go > $(PATHINSTBIN)/protoc-gen-go
-	@chmod +x $(PATHINSTBIN)/protoc-gen-go
+migration: ## Generate migration file specify name with name=your_migration_name
+	go tool goose create ${name} sql -s --dir=./pkg/migrate/migrations
 
-tools-protoc-gen-go-grpc:
-	@mkdir -p $(PATHINSTBIN)
-	rm -f $(PATHINSTBIN)/protoc-gen-go-grpc
-	curl -L https://github.com/grpc/grpc-go/releases/download/cmd/protoc-gen-go-grpc/${PROTOC_GEN_GO_GRPC_VERSION}/protoc-gen-go-grpc.${PROTOC_GEN_GO_GRPC_VERSION}.$(shell uname | tr A-Z a-z).amd64.tar.gz | tar -zOxf - ./protoc-gen-go-grpc > $(PATHINSTBIN)/protoc-gen-go-grpc
-	@chmod +x $(PATHINSTBIN)/protoc-gen-go-grpc
-
-
-make tools: tools-golangci-lint tools-protoc tools-protoc-gen-go tools-protoc-gen-go-grpc## install all tools
+make tools: tools-golangci-lint tools-protoc ## install all tools
 
 generate: generate-swagger generate-go generate-grpc ## run all file generation for the project
 
@@ -106,3 +97,10 @@ generate-grpc: ## generate grpc files
 	@PATH=$$PATH protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     pkg/grpc/*.proto
+
+generate-sqlboiler: build
+	docker compose up -d postgresql
+	sleep 5
+	DB_USER=dimo DB_PASSWORD=dimo DB_HOST=localhost DB_PORT=5432 DB_NAME=credit_tracker $(PATHINSTBIN)/$(BIN_NAME) -migrate-only
+	@PATH=$$PATH go tool sqlboiler psql --no-tests --wipe
+	docker compose down

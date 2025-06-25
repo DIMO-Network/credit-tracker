@@ -15,6 +15,7 @@ import (
 	_ "github.com/DIMO-Network/credit-tracker/docs"
 	"github.com/DIMO-Network/credit-tracker/internal/app"
 	"github.com/DIMO-Network/credit-tracker/internal/config"
+	"github.com/DIMO-Network/credit-tracker/pkg/migrations"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -29,16 +30,28 @@ import (
 // @in                          header
 // @name                        Authorization
 func main() {
-	logger := GetAndSetDefaultLogger("credit-tracker", os.Stdout)
 	// create a flag for the settings file
 	settingsFile := flag.String("settings", "settings.yaml", "settings file")
+	withMigrations := flag.Bool("migrations", true, "run migrations")
+	migrateOnly := flag.Bool("migrate-only", false, "run migrations only")
 	flag.Parse()
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	logger := GetAndSetDefaultLogger("credit-tracker", os.Stdout)
 	settings, err := config.LoadSettings(*settingsFile)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Couldn't load settings.")
 	}
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
+	if *withMigrations || *migrateOnly {
+		logger.Info().Msg("Running migrations")
+		if err := migrations.RunGoose(ctx, []string{"up", "-v"}, settings.DB); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to run migrations.")
+		}
+		if *migrateOnly {
+			return
+		}
+	}
 	monApp := CreateMonitoringServer(strconv.Itoa(settings.MonPort), &logger)
 	group, gCtx := errgroup.WithContext(ctx)
 
