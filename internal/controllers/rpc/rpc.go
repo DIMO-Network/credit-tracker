@@ -23,8 +23,8 @@ func NewServer(svc *creditservice.CreditTrackerService) *Server {
 }
 
 // CheckCredits implements the gRPC service method
-func (s *Server) CheckCredits(ctx context.Context, req *grpc.CreditCheckRequest) (*grpc.CreditCheckResponse, error) {
-	return s.service.CheckCredits(ctx, req)
+func (s *Server) GetBalance(ctx context.Context, req *grpc.GetBalanceRequest) (*grpc.GetBalanceResponse, error) {
+	return s.service.GetBalance(ctx, req)
 }
 
 // DeductCredits implements the gRPC service method

@@ -55,7 +55,7 @@ func main() {
 	monApp := CreateMonitoringServer(strconv.Itoa(settings.MonPort), &logger)
 	group, gCtx := errgroup.WithContext(ctx)
 
-	webServer, rpcServer, err := app.CreateServers(&logger, settings)
+	webServer, rpcServer, err := app.CreateServers(ctx, settings)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create servers.")
 	}
