@@ -23,11 +23,11 @@ func setupTestServer(t *testing.T) (*grpc.Server, string) {
 		GRPCPort: 0, // Let the OS choose an available port
 	}
 	authServer := setupAuthServer(t)
-	defer authServer.Close()
+	authServer.TeardownIfLastTest(t)
 	settings.JWKKeySetURL = authServer.URL() + "/keys"
 
 	db := tests.SetupTestContainer(t)
-	defer db.TeardownIfLastTest(t)
+	db.TeardownIfLastTest(t)
 	settings.DB = db.Settings
 
 	// Create servers

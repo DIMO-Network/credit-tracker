@@ -26,7 +26,7 @@ var (
 )
 
 // getAmountBucket returns a string label for the amount bucket
-func getAmountBucket(amount uint32) string {
+func getAmountBucket(amount int64) string {
 	switch {
 	case amount == 1:
 		return "1"

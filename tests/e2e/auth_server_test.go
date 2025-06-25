@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -24,6 +25,7 @@ type mockAuthServer struct {
 	defaultClaims               auth.Token
 	VehicleContractAddress      string
 	ManufacturerContractAddress string
+	refs                        atomic.Int64
 }
 
 func setupAuthServer(t *testing.T) *mockAuthServer {
@@ -128,6 +130,13 @@ func (m *mockAuthServer) URL() string {
 	return m.server.URL
 }
 
-func (m *mockAuthServer) Close() {
-	m.server.Close()
+func (m *mockAuthServer) TeardownIfLastTest(t *testing.T) {
+	m.refs.Add(1)
+	t.Cleanup(func() {
+		refs := m.refs.Add(-1)
+		if refs != 0 {
+			return
+		}
+		m.server.Close()
+	})
 }

@@ -54,7 +54,7 @@ func (s *CreditTrackerService) GetBalance(ctx context.Context, req *grpc.GetBala
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("get_balance", req.DeveloperLicense, req.AssetDid, getAmountBucket(uint32(credits))).Inc()
+	CreditOperations.WithLabelValues("get_balance", req.DeveloperLicense, req.AssetDid, getAmountBucket(credits)).Inc()
 	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(credits))
 
 	return &grpc.GetBalanceResponse{
@@ -86,7 +86,7 @@ func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.Cred
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("deduct", req.DeveloperLicense, req.AssetDid, getAmountBucket(req.Amount)).Inc()
+	CreditOperations.WithLabelValues("deduct", req.DeveloperLicense, req.AssetDid, getAmountBucket(int64(req.Amount))).Inc()
 
 	return &grpc.CreditDeductResponse{}, nil
 }
@@ -99,7 +99,7 @@ func (s *CreditTrackerService) RefundCredits(ctx context.Context, req *grpc.Refu
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("refund", operation.LicenseID, operation.AssetDid, getAmountBucket(uint32(operation.TotalAmount))).Inc()
+	CreditOperations.WithLabelValues("refund", operation.LicenseID, operation.AssetDid, getAmountBucket(operation.TotalAmount)).Inc()
 	CreditBalance.WithLabelValues(operation.LicenseID, operation.AssetDid).Set(float64(operation.TotalAmount))
 
 	return &grpc.RefundCreditsResponse{}, nil
