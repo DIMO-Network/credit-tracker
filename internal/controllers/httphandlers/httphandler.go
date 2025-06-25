@@ -52,7 +52,7 @@ func (v *HTTPController) GetDeveloperCredits(fiberCtx *fiber.Ctx) error {
 	if !ok {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid token ID")
 	}
-	req := &grpc.CreditCheckRequest{
+	req := &grpc.GetBalanceRequest{
 		DeveloperLicense: developerLicense,
 		AssetDid: cloudevent.ERC721DID{
 			ChainID:         v.ChainID,
@@ -61,7 +61,7 @@ func (v *HTTPController) GetDeveloperCredits(fiberCtx *fiber.Ctx) error {
 		}.String(),
 	}
 
-	resp, err := v.creditTrackerService.CheckCredits(fiberCtx.Context(), req)
+	resp, err := v.creditTrackerService.GetBalance(fiberCtx.Context(), req)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to check credits")
 	}

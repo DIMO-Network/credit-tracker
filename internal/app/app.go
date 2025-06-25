@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -11,7 +12,9 @@ import (
 	"github.com/DIMO-Network/credit-tracker/pkg/auth"
 	"github.com/DIMO-Network/credit-tracker/pkg/creditrepo"
 	"github.com/DIMO-Network/credit-tracker/pkg/creditservice"
+	"github.com/DIMO-Network/credit-tracker/pkg/events"
 	ctgrpc "github.com/DIMO-Network/credit-tracker/pkg/grpc"
+	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/DIMO-Network/shared/pkg/middleware/metrics"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -25,23 +28,24 @@ import (
 )
 
 // CreateServers creates a new fiber app and grpc server with the given settings.
-func CreateServers(logger *zerolog.Logger, settings *config.Settings) (*fiber.App, *grpc.Server, error) {
-	ctrl, rpcCtrl, err := createControllers(settings)
+func CreateServers(ctx context.Context, settings *config.Settings) (*fiber.App, *grpc.Server, error) {
+	ctrl, rpcCtrl, err := createControllers(ctx, settings)
 	if err != nil {
 		return nil, nil, err
 	}
-	app := setupHttpServer(logger, settings, ctrl)
+	app := setupHttpServer(ctx, settings, ctrl)
 	rpc := setupRPCServer(settings, rpcCtrl)
 	return app, rpc, nil
 }
 
-func setupHttpServer(logger *zerolog.Logger, settings *config.Settings, ctrl *httphandlers.HTTPController) *fiber.App {
+func setupHttpServer(ctx context.Context, settings *config.Settings, ctrl *httphandlers.HTTPController) *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return ErrorHandler(c, err)
 		},
 		DisableStartupMessage: true,
 	})
+	logger := zerolog.Ctx(ctx)
 	app.Use(func(c *fiber.Ctx) error {
 		userCtx := logger.With().Str("httpPath", strings.TrimPrefix(c.Path(), "/")).
 			Str("httpMethod", c.Method()).Logger().WithContext(c.UserContext())
@@ -128,9 +132,14 @@ func HealthCheck(ctx *fiber.Ctx) error {
 }
 
 // createControllers creates a new controllers with the given settings.
-func createControllers(settings *config.Settings) (*httphandlers.HTTPController, *rpc.Server, error) {
-	repo := creditrepo.New()
-	creditTrackerService := creditservice.NewCreditTrackerService(repo)
+func createControllers(ctx context.Context, settings *config.Settings) (*httphandlers.HTTPController, *rpc.Server, error) {
+	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
+	logger := zerolog.Ctx(ctx)
+	pdb.WaitForDB(*logger)
+
+	repo := creditrepo.New(pdb.DBS().GetWriterConn())
+	contractProcessor := events.NewContractProcessor(repo)
+	creditTrackerService := creditservice.NewCreditTrackerService(repo, contractProcessor)
 	server := rpc.NewServer(creditTrackerService)
 	ctrl := httphandlers.NewHTTPController(creditTrackerService, settings)
 

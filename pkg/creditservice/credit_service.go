@@ -3,52 +3,61 @@ package creditservice
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/DIMO-Network/cloudevent"
+	"github.com/DIMO-Network/credit-tracker/models"
 	"github.com/DIMO-Network/credit-tracker/pkg/creditrepo"
 	"github.com/DIMO-Network/credit-tracker/pkg/grpc"
-	"github.com/rs/zerolog"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 const creditsFromBurn = 50_000
 
 type Repository interface {
-	UpdateCredits(ctx context.Context, developerLicense, assetDid string, amount int64) (int64, error)
-	GetCredits(ctx context.Context, developerLicense, assetDid string) (int64, error)
+	DeductCredits(ctx context.Context, licenseID string, assetDID string, amount uint32, appName string, referenceID string) (*models.CreditOperation, error)
+	RefundCredits(ctx context.Context, appName string, referenceID string) (*models.CreditOperation, error)
+	GetBalance(ctx context.Context, licenseID, assetDID string) (int64, error)
+}
+
+type ContractProcessor interface {
+	CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint32) (*types.Transaction, error)
 }
 
 // creditTrackerService implements the CreditTrackerService interface
 type CreditTrackerService struct {
-	repository Repository
+	repository        Repository
+	contractProcessor ContractProcessor
 }
 
 // NewCreditTrackerService creates a new instance of the credit tracker service
-func NewCreditTrackerService(repo Repository) *CreditTrackerService {
+func NewCreditTrackerService(repo Repository, contractProcessor ContractProcessor) *CreditTrackerService {
 	return &CreditTrackerService{
-		repository: repo,
+		repository:        repo,
+		contractProcessor: contractProcessor,
 	}
 }
 
 // CheckCredits implements the credit check operation
-func (s *CreditTrackerService) CheckCredits(ctx context.Context, req *grpc.CreditCheckRequest) (*grpc.CreditCheckResponse, error) {
+func (s *CreditTrackerService) GetBalance(ctx context.Context, req *grpc.GetBalanceRequest) (*grpc.GetBalanceResponse, error) {
 	if _, err := decodeAssetDID(req.AssetDid); err != nil {
 		return nil, err
 	}
 
-	credits, err := s.repository.GetCredits(ctx, req.DeveloperLicense, req.AssetDid)
+	credits, err := s.repository.GetBalance(ctx, req.DeveloperLicense, req.AssetDid)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Failed to get credits")
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("check", req.DeveloperLicense, req.AssetDid, getAmountBucket(credits)).Inc()
+	CreditOperations.WithLabelValues("get_balance", req.DeveloperLicense, req.AssetDid, getAmountBucket(credits)).Inc()
 	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(credits))
 
-	return &grpc.CreditCheckResponse{
+	return &grpc.GetBalanceResponse{
 		RemainingCredits: credits,
 	}, nil
 }
@@ -60,48 +69,40 @@ func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.Cred
 	}
 
 	// First attempt to deduct credits
-	newCredits, err := s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, -req.Amount)
+	_, err := s.repository.DeductCredits(ctx, req.DeveloperLicense, req.AssetDid, req.Amount, req.AppName, req.ReferenceId)
 	for errors.Is(err, creditrepo.InsufficientCreditsErr) {
-		_, err = s.addBurnCredits(ctx, req.DeveloperLicense, req.AssetDid)
+		err = s.addBurnCredits(ctx, req.DeveloperLicense, req.AssetDid)
 		if err != nil {
-			return nil, status.Error(codes.Internal, "Failed to add credits after burn")
+			return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to add credits after burn: %v", err))
 		}
-		newCredits, err = s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, -req.Amount)
+		// Try again now that the developer should have credits
+		_, err = s.repository.DeductCredits(ctx, req.DeveloperLicense, req.AssetDid, req.Amount, req.AppName, req.ReferenceId)
 		if err != nil {
-			return nil, status.Error(codes.Internal, "Failed to update credits")
+			return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to deduct credits after burn: %v", err))
 		}
 	}
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to update credits")
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to deduct credits: %v", err))
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("deduct", req.DeveloperLicense, req.AssetDid, getAmountBucket(req.Amount)).Inc()
-	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(newCredits))
+	CreditOperations.WithLabelValues("deduct", req.DeveloperLicense, req.AssetDid, getAmountBucket(int64(req.Amount))).Inc()
 
-	return &grpc.CreditDeductResponse{
-		RemainingCredits: newCredits,
-	}, nil
+	return &grpc.CreditDeductResponse{}, nil
 }
 
 // RefundCredits implements the credit refund operation
 func (s *CreditTrackerService) RefundCredits(ctx context.Context, req *grpc.RefundCreditsRequest) (*grpc.RefundCreditsResponse, error) {
-	if _, err := decodeAssetDID(req.AssetDid); err != nil {
-		return nil, err
-	}
-
-	newCredits, err := s.repository.UpdateCredits(ctx, req.DeveloperLicense, req.AssetDid, req.Amount)
+	operation, err := s.repository.RefundCredits(ctx, req.AppName, req.ReferenceId)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "Failed to update credits")
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Failed to refund credits: %v", err))
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("refund", req.DeveloperLicense, req.AssetDid, getAmountBucket(req.Amount)).Inc()
-	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(newCredits))
+	CreditOperations.WithLabelValues("refund", operation.LicenseID, operation.AssetDid, getAmountBucket(operation.TotalAmount)).Inc()
+	CreditBalance.WithLabelValues(operation.LicenseID, operation.AssetDid).Set(float64(operation.TotalAmount))
 
-	return &grpc.RefundCreditsResponse{
-		RemainingCredits: newCredits,
-	}, nil
+	return &grpc.RefundCreditsResponse{}, nil
 }
 
 func decodeAssetDID(assetDid string) (cloudevent.ERC721DID, error) {
@@ -163,17 +164,14 @@ func HandleInsufficientCredits(ctx context.Context, assetDid string, hasCredits 
 }
 
 // addBurnCredits adds burn credits to the user's balance then tries to deduct the amount requested.
-func (s *CreditTrackerService) addBurnCredits(ctx context.Context, developerLicense, assetDid string) (int64, error) {
+func (s *CreditTrackerService) addBurnCredits(ctx context.Context, developerLicense, assetDid string) error {
 	// Add burn credits
-	burnCredits, err := s.repository.UpdateCredits(ctx, developerLicense, assetDid, creditsFromBurn)
+	_, err := s.contractProcessor.CreateGrant(ctx, developerLicense, assetDid, creditsFromBurn)
 	if err != nil {
-		return 0, err
+		return fmt.Errorf("failed to create grant transaction: %w", err)
 	}
-
 	// Record burn credit metric
 	CreditOperations.WithLabelValues("burn", developerLicense, assetDid, getAmountBucket(creditsFromBurn)).Inc()
-	CreditBalance.WithLabelValues(developerLicense, assetDid).Set(float64(burnCredits))
-	zerolog.Ctx(ctx).Info().Str("developerLicense", developerLicense).Str("assetDid", assetDid).Int64("newBalance", burnCredits).Msg("Added burn credits")
 
-	return burnCredits, nil
+	return nil
 }
