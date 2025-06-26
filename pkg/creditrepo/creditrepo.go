@@ -690,7 +690,10 @@ func getExpirationDate(mintTime time.Time) time.Time {
 
 // rollbackTx is a helper function to handle transaction rollback with error checking
 func rollbackTx(ctx context.Context, tx *sql.Tx) {
-	if err := tx.Rollback(); err != nil {
+	if tx == nil {
+		return
+	}
+	if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
 	}
 }
