@@ -19,13 +19,13 @@ import (
 const creditsFromBurn = 50_000
 
 type Repository interface {
-	DeductCredits(ctx context.Context, licenseID string, assetDID string, amount uint32, appName string, referenceID string) (*models.CreditOperation, error)
+	DeductCredits(ctx context.Context, licenseID string, assetDID string, amount uint64, appName string, referenceID string) (*models.CreditOperation, error)
 	RefundCredits(ctx context.Context, appName string, referenceID string) (*models.CreditOperation, error)
 	GetBalance(ctx context.Context, licenseID, assetDID string) (int64, error)
 }
 
 type ContractProcessor interface {
-	CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint32) (*types.Transaction, error)
+	CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint64) (*types.Transaction, error)
 }
 
 // creditTrackerService implements the CreditTrackerService interface

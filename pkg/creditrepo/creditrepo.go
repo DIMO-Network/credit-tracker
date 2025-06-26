@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/DIMO-Network/credit-tracker/models"
@@ -44,8 +45,10 @@ type Repository struct {
 // 4. Get active grants in FIFO order (with row-level locking)
 // 5. Deduct from grants using FIFO and record details
 // 6. Commit the operation
-func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID string, deductionAmount uint32, appName, referenceID string) (*models.CreditOperation, error) {
-	// Convert uint32 to int64 for algebraic operations
+func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID string, deductionAmount uint64, appName, referenceID string) (*models.CreditOperation, error) {
+	if deductionAmount > math.MaxInt64 {
+		return nil, fmt.Errorf("deduction amount is too large must be less than %d", math.MaxInt64)
+	}
 	amount := int64(deductionAmount)
 
 	// First check for outstanding debt from failed grants
@@ -87,7 +90,7 @@ func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID stri
 		LicenseID:     licenseID,
 		AssetDid:      assetDID,
 		OperationType: OperationTypeDeduction,
-		TotalAmount:   -amount,
+		TotalAmount:   amount,
 		AppName:       appName,
 		ReferenceID:   referenceID,
 		CreatedAt:     null.TimeFrom(time.Now()),
@@ -165,7 +168,7 @@ func (r *Repository) RefundCredits(ctx context.Context, appName, referenceID str
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active grants: %w", err)
 	}
-	refundAmount := -deductOp.TotalAmount
+	refundAmount := deductOp.TotalAmount
 
 	operation := &models.CreditOperation{
 		LicenseID:     deductOp.LicenseID,
@@ -237,9 +240,12 @@ func (r *Repository) RefundCredits(ctx context.Context, appName, referenceID str
 // 1. Create a new grant record
 // 2. Create a new operation record
 // 3. Settle any debt if any
-func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string, creditAmount uint32, txHash string, mintTime time.Time) (*models.CreditOperation, error) {
+func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string, creditAmount uint64, txHash string, mintTime time.Time) (*models.CreditOperation, error) {
 	if creditAmount == 0 {
 		return nil, fmt.Errorf("invalid amount: %d. Amount must be positive", creditAmount)
+	}
+	if creditAmount > math.MaxInt64 {
+		return nil, fmt.Errorf("credit amount is too large must be less than %d", math.MaxInt64)
 	}
 	amount := int64(creditAmount)
 
@@ -307,9 +313,12 @@ func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string
 // 1. Update the grant record to set the log index
 // 2. Create a new operation record
 // 3. Settle any debt if any
-func (r *Repository) ConfirmGrant(ctx context.Context, licenseID, assetDID string, txHash string, logIndex int, creditAmount uint32, mintTime time.Time) (*models.CreditOperation, error) {
+func (r *Repository) ConfirmGrant(ctx context.Context, licenseID, assetDID string, txHash string, logIndex int, creditAmount uint64, mintTime time.Time) (*models.CreditOperation, error) {
 	if creditAmount == 0 {
 		return nil, fmt.Errorf("invalid amount: %d. Amount must be positive", creditAmount)
+	}
+	if creditAmount > math.MaxInt64 {
+		return nil, fmt.Errorf("credit amount is too large must be less than %d", math.MaxInt64)
 	}
 	amount := int64(creditAmount)
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{

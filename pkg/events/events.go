@@ -17,8 +17,8 @@ import (
 )
 
 type GrantRepository interface {
-	CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint32, txHash string, mintTime time.Time) (*models.CreditOperation, error)
-	ConfirmGrant(ctx context.Context, licenseID string, assetDID string, txHash string, logIndex int, amount uint32, mintTime time.Time) (*models.CreditOperation, error)
+	CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint64, txHash string, mintTime time.Time) (*models.CreditOperation, error)
+	ConfirmGrant(ctx context.Context, licenseID string, assetDID string, txHash string, logIndex int, amount uint64, mintTime time.Time) (*models.CreditOperation, error)
 }
 
 type ContractProcessor struct {
@@ -30,7 +30,7 @@ func NewContractProcessor(grantRepo GrantRepository) *ContractProcessor {
 	return &ContractProcessor{grantRepo: grantRepo}
 }
 
-func (c *ContractProcessor) CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint32) (*types.Transaction, error) {
+func (c *ContractProcessor) CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint64) (*types.Transaction, error) {
 	tx := tmpFakeTx()
 	_, err := c.grantRepo.CreateGrant(ctx, licenseID, assetDID, amount, tx.Hash().String(), time.Now())
 	if err != nil {
@@ -103,7 +103,7 @@ func (p ContractProcessor) ConsumeClaim(session sarama.ConsumerGroupSession, cla
 type DCXBurnedData struct {
 	LicenseID string `json:"licenseId"`
 	AssetDid  string `json:"assetDid"`
-	Amount    uint32 `json:"amount"`
+	Amount    uint64 `json:"amount"`
 }
 
 func (p ContractProcessor) handleDCXBurned(ctx context.Context, data contractEventData) error {

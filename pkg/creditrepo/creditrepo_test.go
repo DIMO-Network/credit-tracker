@@ -54,7 +54,7 @@ func TestDeductCredits(t *testing.T) {
 		apiCost := int64(1)
 
 		// Test: Deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, referenceID)
 		require.NoError(t, err)
 
 		// Verify: Check remaining amount
@@ -72,7 +72,7 @@ func TestDeductCredits(t *testing.T) {
 		).One(ctx, db)
 		require.NoError(t, err)
 		assert.Equal(t, OperationTypeDeduction, operation.OperationType)
-		assert.Equal(t, int64(-apiCost), operation.TotalAmount)
+		assert.Equal(t, int64(apiCost), operation.TotalAmount)
 	})
 
 	t.Run("successful deduction across multiple grants", func(t *testing.T) {
@@ -105,7 +105,7 @@ func TestDeductCredits(t *testing.T) {
 		apiCost := int64(10)
 
 		// Test: Deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, uuid.NewString())
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, uuid.NewString())
 		require.NoError(t, err)
 
 		// Verify: Check remaining amount
@@ -128,7 +128,7 @@ func TestDeductCredits(t *testing.T) {
 		).One(ctx, db)
 		require.NoError(t, err)
 		assert.Equal(t, OperationTypeDeduction, operation.OperationType)
-		assert.Equal(t, int64(-apiCost), operation.TotalAmount)
+		assert.Equal(t, int64(apiCost), operation.TotalAmount)
 	})
 
 	t.Run("insufficient credits", func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestDeductCredits(t *testing.T) {
 
 		apiCost := int64(1)
 		// Test: Try to deduct more than available
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, uuid.NewString())
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, uuid.NewString())
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "insufficient credits")
 	})
@@ -170,7 +170,7 @@ func TestDeductCredits(t *testing.T) {
 
 		apiCost := int64(1)
 		// Test: Try to deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, uuid.NewString())
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, uuid.NewString())
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "outstanding debt")
 	})
@@ -204,7 +204,7 @@ func TestDeductCredits(t *testing.T) {
 		apiCost := int64(10)
 
 		// Test: Deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, uuid.NewString())
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, uuid.NewString())
 		require.NoError(t, err)
 
 		// Verify: Expired grant should be untouched
@@ -251,7 +251,7 @@ func TestDeductCredits(t *testing.T) {
 		apiCost := int64(10)
 
 		// Test: Deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, uuid.NewString())
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, uuid.NewString())
 		require.NoError(t, err)
 
 		// Verify: First pending grant should be used
@@ -321,7 +321,7 @@ func TestDeductCredits(t *testing.T) {
 		require.NoError(t, err)
 
 		// Test: Try to deduct negative amount - this should be handled by the method itself
-		// Since uint32 can't represent negative values, we'll test with 0 instead
+		// Since uint64 can't represent negative values, we'll test with 0 instead
 		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, 0, testAPIEndpoint, uuid.NewString())
 		require.NoError(t, err)
 
@@ -352,7 +352,7 @@ func TestDeductCredits(t *testing.T) {
 		apiCost := int64(1)
 
 		// Test: Deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, referenceID)
 		require.NoError(t, err)
 
 		// Verify: Check remaining amount
@@ -362,7 +362,7 @@ func TestDeductCredits(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, defaultGrantAmount-apiCost, grant.RemainingAmount)
 
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, referenceID)
 		require.Error(t, err)
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -405,7 +405,7 @@ func TestRefundCredits(t *testing.T) {
 		require.NoError(t, err)
 
 		referenceID := uuid.NewString()
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(100), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(100), testAPIEndpoint, referenceID)
 		require.NoError(t, err)
 
 		grant, err = models.CreditGrants(
@@ -476,7 +476,7 @@ func TestRefundCredits(t *testing.T) {
 		require.NoError(t, err)
 
 		referenceID := uuid.NewString()
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(10), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(10), testAPIEndpoint, referenceID)
 		require.NoError(t, err)
 
 		grant1, err = models.CreditGrants(
@@ -549,7 +549,7 @@ func TestRefundCredits(t *testing.T) {
 		require.NoError(t, err)
 
 		referenceID := uuid.NewString()
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(100), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(100), testAPIEndpoint, referenceID)
 		require.NoError(t, err)
 
 		grant, err = models.CreditGrants(
@@ -607,7 +607,7 @@ func TestRefundCredits(t *testing.T) {
 		require.NoError(t, err)
 
 		referenceID := uuid.NewString()
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(0), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(0), testAPIEndpoint, referenceID)
 		require.NoError(t, err)
 
 		grant, err = models.CreditGrants(
@@ -654,7 +654,7 @@ func TestRefundCredits(t *testing.T) {
 		require.NoError(t, err)
 
 		referenceID := uuid.NewString()
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(100), testAPIEndpoint, referenceID)
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(100), testAPIEndpoint, referenceID)
 		require.NoError(t, err)
 
 		grant, err = models.CreditGrants(
@@ -702,7 +702,7 @@ func TestCreateGrant(t *testing.T) {
 		t.Parallel()
 		licenseID := "test-license-grant-create"
 		// Test: Create a new grant
-		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint32(defaultGrantAmount), testTXHash, time.Now())
+		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), testTXHash, time.Now())
 		require.NoError(t, err)
 
 		// Verify: Check grant record
@@ -752,7 +752,7 @@ func TestCreateGrant(t *testing.T) {
 		require.NoError(t, err)
 
 		// Test: Create a new grant
-		_, err = repo.CreateGrant(ctx, licenseID, testAssetID, uint32(defaultGrantAmount), localTextTXHash.Hex(), time.Now())
+		_, err = repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), localTextTXHash.Hex(), time.Now())
 		require.NoError(t, err)
 
 		// Verify: Failed grant should be settled
@@ -790,7 +790,7 @@ func TestCreateGrant(t *testing.T) {
 		t.Parallel()
 		licenseID := "test-license-grant-negative"
 		// Test: Try to create a grant with negative amount - this should be handled by the method itself
-		// Since uint32 can't represent negative values, we'll test with 0 instead
+		// Since uint64 can't represent negative values, we'll test with 0 instead
 		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, 0, testTXHash, time.Now())
 		require.Error(t, err)
 
@@ -817,7 +817,7 @@ func TestConfirmGrant(t *testing.T) {
 		// Setup: Create a pending grant
 
 		localTextTXHash := common.BytesToAddress([]byte(licenseID))
-		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint32(defaultGrantAmount), localTextTXHash.Hex(), time.Now())
+		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), localTextTXHash.Hex(), time.Now())
 		require.NoError(t, err)
 
 		// Verify: Check grant was created
@@ -827,7 +827,7 @@ func TestConfirmGrant(t *testing.T) {
 		require.NoError(t, err)
 
 		// Test: Confirm the grant
-		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 100, uint32(defaultGrantAmount), time.Now())
+		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 100, uint64(defaultGrantAmount), time.Now())
 		require.NoError(t, err)
 
 		// Verify: Check grant status
@@ -873,7 +873,7 @@ func TestConfirmGrant(t *testing.T) {
 		localTextTXHash := common.BytesToAddress([]byte(licenseID))
 		// Test: Confirm a non-existent grant
 		mintTime := time.Now()
-		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), mintTime)
+		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), mintTime)
 		require.NoError(t, err) // Should create a new grant
 
 		// Verify: Check grant was created and confirmed
@@ -915,7 +915,7 @@ func TestConfirmGrant(t *testing.T) {
 		localTextTXHash := common.BytesToAddress([]byte(licenseID))
 		// Test: Confirm a non-existent grant
 		mintTime := time.Now()
-		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), mintTime)
+		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), mintTime)
 		require.NoError(t, err) // Should create a new grant
 
 		// Verify: Check grant was created and confirmed
@@ -932,7 +932,7 @@ func TestConfirmGrant(t *testing.T) {
 		assert.Equal(t, getExpirationDate(mintTime).Truncate(time.Millisecond), grant.ExpiresAt.UTC().Truncate(time.Millisecond))
 
 		// Test: Try to confirm again
-		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), mintTime)
+		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), mintTime)
 		require.Error(t, err)
 		// Verify: Grant should be updated with new log index
 		grants, err := models.CreditGrants(
@@ -960,15 +960,15 @@ func TestFIFOOrdering(t *testing.T) {
 		localTextTXHash := common.BytesToAddress([]byte(licenseID))
 		localTextTXHash2 := common.BytesToAddress([]byte(licenseID + "2"))
 
-		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), time.Now().Add(-time.Hour))
+		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
-		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash2.Hex(), 2, uint32(defaultGrantAmount), time.Now())
+		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash2.Hex(), 2, uint64(defaultGrantAmount), time.Now())
 		require.NoError(t, err)
 
 		apiCost := int64(10)
 
 		// Test: Deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, uuid.NewString())
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, uuid.NewString())
 		require.NoError(t, err)
 
 		// Verify: Old grant should be deducted from first
@@ -994,17 +994,17 @@ func TestFIFOOrdering(t *testing.T) {
 		localTextTXHash3 := common.BytesToAddress([]byte(licenseID + "3"))
 
 		// Setup: Create three grants with different expiration dates
-		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), time.Now().Add(-time.Hour*2))
+		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), time.Now().Add(-time.Hour*2))
 		require.NoError(t, err)
-		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash2.Hex(), 2, uint32(defaultGrantAmount), time.Now().Add(-time.Hour))
+		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash2.Hex(), 2, uint64(defaultGrantAmount), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
-		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash3.Hex(), 3, uint32(defaultGrantAmount), time.Now())
+		_, err = repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash3.Hex(), 3, uint64(defaultGrantAmount), time.Now())
 		require.NoError(t, err)
 
 		apiCost := int64(defaultGrantAmount + 100) // More than one grant's worth
 
 		// Test: Deduct credits
-		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint32(apiCost), testAPIEndpoint, uuid.NewString())
+		_, err = repo.DeductCredits(ctx, licenseID, testAssetID, uint64(apiCost), testAPIEndpoint, uuid.NewString())
 		require.NoError(t, err)
 
 		// Verify: First grant should be fully depleted
@@ -1044,7 +1044,7 @@ func TestConcurrentOperations(t *testing.T) {
 		licenseID := "test-license-concurrent"
 		localTextTXHash := common.BytesToAddress([]byte(licenseID))
 		// Setup: Create a grant with sufficient credits
-		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), time.Now())
+		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), time.Now())
 		require.NoError(t, err)
 
 		// Test: Perform concurrent deductions
@@ -1078,7 +1078,7 @@ func TestConcurrentOperations(t *testing.T) {
 		licenseID := "test-license-concurrent-refund"
 		localTextTXHash := common.BytesToAddress([]byte(licenseID))
 
-		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), time.Now())
+		_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), time.Now())
 		require.NoError(t, err)
 
 		referenceID1 := uuid.NewString()
@@ -1125,11 +1125,11 @@ func TestConcurrentOperations(t *testing.T) {
 		// Test: Perform concurrent confirmations
 		done := make(chan error, 2)
 		go func() {
-			_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint32(defaultGrantAmount), time.Now())
+			_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 1, uint64(defaultGrantAmount), time.Now())
 			done <- err
 		}()
 		go func() {
-			_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 2, uint32(defaultGrantAmount), time.Now())
+			_, err := repo.ConfirmGrant(ctx, licenseID, testAssetID, localTextTXHash.Hex(), 2, uint64(defaultGrantAmount), time.Now())
 			done <- err
 		}()
 
