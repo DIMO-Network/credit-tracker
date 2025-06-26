@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 6
 image:
   repository: dimozone/credit-tracker
   pullPolicy: IfNotPresent
