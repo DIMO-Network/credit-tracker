@@ -277,7 +277,7 @@ type CreditDeductRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	DeveloperLicense string                 `protobuf:"bytes,1,opt,name=developer_license,json=developerLicense,proto3" json:"developer_license,omitempty"`
 	AssetDid         string                 `protobuf:"bytes,2,opt,name=asset_did,json=assetDid,proto3" json:"asset_did,omitempty"`
-	Amount           uint32                 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	Amount           uint64                 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
 	ReferenceId      string                 `protobuf:"bytes,4,opt,name=reference_id,json=referenceId,proto3" json:"reference_id,omitempty"`
 	AppName          string                 `protobuf:"bytes,5,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
 	unknownFields    protoimpl.UnknownFields
@@ -328,7 +328,7 @@ func (x *CreditDeductRequest) GetAssetDid() string {
 	return ""
 }
 
-func (x *CreditDeductRequest) GetAmount() uint32 {
+func (x *CreditDeductRequest) GetAmount() uint64 {
 	if x != nil {
 		return x.Amount
 	}
@@ -489,7 +489,7 @@ const file_pkg_grpc_credit_tracker_proto_rawDesc = "" +
 	"\x13CreditDeductRequest\x12+\n" +
 	"\x11developer_license\x18\x01 \x01(\tR\x10developerLicense\x12\x1b\n" +
 	"\tasset_did\x18\x02 \x01(\tR\bassetDid\x12\x16\n" +
-	"\x06amount\x18\x03 \x01(\rR\x06amount\x12!\n" +
+	"\x06amount\x18\x03 \x01(\x04R\x06amount\x12!\n" +
 	"\freference_id\x18\x04 \x01(\tR\vreferenceId\x12\x19\n" +
 	"\bapp_name\x18\x05 \x01(\tR\aappName\"\x16\n" +
 	"\x14CreditDeductResponse\"T\n" +

@@ -54,7 +54,7 @@ message GetBalanceResponse {
 message CreditDeductRequest {
   string developer_license = 1;
   string asset_did = 2;
-  uint32 amount = 3;
+  uint64 amount = 3;
   string reference_id = 4;
   string app_name = 5;
 }
