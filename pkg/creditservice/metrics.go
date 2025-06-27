@@ -12,7 +12,7 @@ var (
 			Name: "credit_tracker_operations_total",
 			Help: "Total number of credit operations performed by the credit tracker service",
 		},
-		[]string{"operation", "developer_license", "asset_did", "amount_bucket"},
+		[]string{"operation", "developer_license", "amount_bucket"},
 	)
 
 	// CreditBalance tracks the current credit balance
@@ -21,7 +21,7 @@ var (
 			Name: "credit_tracker_balance",
 			Help: "Current credit balance tracked by the credit tracker service",
 		},
-		[]string{"developer_license", "asset_did"},
+		[]string{"developer_license"},
 	)
 )
 

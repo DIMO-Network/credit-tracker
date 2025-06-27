@@ -54,8 +54,8 @@ func (s *CreditTrackerService) GetBalance(ctx context.Context, req *grpc.GetBala
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("get_balance", req.DeveloperLicense, req.AssetDid, getAmountBucket(credits)).Inc()
-	CreditBalance.WithLabelValues(req.DeveloperLicense, req.AssetDid).Set(float64(credits))
+	CreditOperations.WithLabelValues("get_balance", req.DeveloperLicense, getAmountBucket(credits)).Inc()
+	CreditBalance.WithLabelValues(req.DeveloperLicense).Set(float64(credits))
 
 	return &grpc.GetBalanceResponse{
 		RemainingCredits: credits,
@@ -86,7 +86,7 @@ func (s *CreditTrackerService) DeductCredits(ctx context.Context, req *grpc.Cred
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("deduct", req.DeveloperLicense, req.AssetDid, getAmountBucket(int64(req.Amount))).Inc()
+	CreditOperations.WithLabelValues("deduct", req.DeveloperLicense, getAmountBucket(int64(req.Amount))).Inc()
 
 	return &grpc.CreditDeductResponse{}, nil
 }
@@ -99,8 +99,8 @@ func (s *CreditTrackerService) RefundCredits(ctx context.Context, req *grpc.Refu
 	}
 
 	// Record metrics
-	CreditOperations.WithLabelValues("refund", operation.LicenseID, operation.AssetDid, getAmountBucket(operation.TotalAmount)).Inc()
-	CreditBalance.WithLabelValues(operation.LicenseID, operation.AssetDid).Set(float64(operation.TotalAmount))
+	CreditOperations.WithLabelValues("refund", operation.LicenseID, getAmountBucket(operation.TotalAmount)).Inc()
+	CreditBalance.WithLabelValues(operation.LicenseID).Set(float64(operation.TotalAmount))
 
 	return &grpc.RefundCreditsResponse{}, nil
 }
@@ -171,7 +171,7 @@ func (s *CreditTrackerService) addBurnCredits(ctx context.Context, developerLice
 		return fmt.Errorf("failed to create grant transaction: %w", err)
 	}
 	// Record burn credit metric
-	CreditOperations.WithLabelValues("burn", developerLicense, assetDid, getAmountBucket(creditsFromBurn)).Inc()
+	CreditOperations.WithLabelValues("burn", developerLicense, getAmountBucket(creditsFromBurn)).Inc()
 
 	return nil
 }
