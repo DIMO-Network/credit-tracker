@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DIMO-Network/credit-tracker/pkg/auth"
+	"github.com/DIMO-Network/credit-tracker/internal/auth"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/golang-jwt/jwt/v5"

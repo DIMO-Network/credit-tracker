@@ -4,9 +4,9 @@ import (
 	"math/big"
 
 	"github.com/DIMO-Network/cloudevent"
+	"github.com/DIMO-Network/credit-tracker/internal/auth"
 	"github.com/DIMO-Network/credit-tracker/internal/config"
-	"github.com/DIMO-Network/credit-tracker/pkg/auth"
-	"github.com/DIMO-Network/credit-tracker/pkg/creditservice"
+	"github.com/DIMO-Network/credit-tracker/internal/creditservice"
 	"github.com/DIMO-Network/credit-tracker/pkg/grpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"

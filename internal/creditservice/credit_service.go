@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/DIMO-Network/cloudevent"
+	"github.com/DIMO-Network/credit-tracker/internal/creditrepo"
 	"github.com/DIMO-Network/credit-tracker/models"
-	"github.com/DIMO-Network/credit-tracker/pkg/creditrepo"
 	"github.com/DIMO-Network/credit-tracker/pkg/grpc"
 	"github.com/ethereum/go-ethereum/core/types"
 )

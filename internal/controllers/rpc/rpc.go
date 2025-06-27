@@ -3,7 +3,7 @@ package rpc
 import (
 	"context"
 
-	"github.com/DIMO-Network/credit-tracker/pkg/creditservice"
+	"github.com/DIMO-Network/credit-tracker/internal/creditservice"
 	"github.com/DIMO-Network/credit-tracker/pkg/grpc"
 )
 
