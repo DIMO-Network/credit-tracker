@@ -46,6 +46,13 @@ type Repository struct {
 // 5. Deduct from grants using FIFO and record details
 // 6. Commit the operation
 func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID string, deductionAmount uint64, appName, referenceID string) (*models.CreditOperation, error) {
+	return RetryWithDeadlockHandling(ctx, "DeductCredits", func() (*models.CreditOperation, error) {
+		return r.deductCreditsInternal(ctx, licenseID, assetDID, deductionAmount, appName, referenceID)
+	})
+}
+
+// deductCreditsInternal is the internal implementation of DeductCredits
+func (r *Repository) deductCreditsInternal(ctx context.Context, licenseID, assetDID string, deductionAmount uint64, appName, referenceID string) (*models.CreditOperation, error) {
 	if deductionAmount > math.MaxInt64 {
 		return nil, fmt.Errorf("deduction amount is too large must be less than %d", math.MaxInt64)
 	}
@@ -154,6 +161,13 @@ func (r *Repository) DeductCredits(ctx context.Context, licenseID, assetDID stri
 // 3. Create a operation record for the refund
 // 4. Settle any debt if any
 func (r *Repository) RefundCredits(ctx context.Context, appName, referenceID string) (*models.CreditOperation, error) {
+	return RetryWithDeadlockHandling(ctx, "RefundCredits", func() (*models.CreditOperation, error) {
+		return r.refundCreditsInternal(ctx, appName, referenceID)
+	})
+}
+
+// refundCreditsInternal is the internal implementation of RefundCredits
+func (r *Repository) refundCreditsInternal(ctx context.Context, appName, referenceID string) (*models.CreditOperation, error) {
 	// Start a transaction with read committed isolation
 	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
@@ -241,6 +255,13 @@ func (r *Repository) RefundCredits(ctx context.Context, appName, referenceID str
 // 2. Create a new operation record
 // 3. Settle any debt if any
 func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string, creditAmount uint64, txHash string, mintTime time.Time) (*models.CreditOperation, error) {
+	return RetryWithDeadlockHandling(ctx, "CreateGrant", func() (*models.CreditOperation, error) {
+		return r.createGrantInternal(ctx, licenseID, assetDID, creditAmount, txHash, mintTime)
+	})
+}
+
+// createGrantInternal is the internal implementation of CreateGrant
+func (r *Repository) createGrantInternal(ctx context.Context, licenseID, assetDID string, creditAmount uint64, txHash string, mintTime time.Time) (*models.CreditOperation, error) {
 	if creditAmount == 0 {
 		return nil, fmt.Errorf("invalid amount: %d. Amount must be positive", creditAmount)
 	}
@@ -314,6 +335,13 @@ func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string
 // 2. Create a new operation record
 // 3. Settle any debt if any
 func (r *Repository) ConfirmGrant(ctx context.Context, licenseID, assetDID string, txHash string, logIndex int, creditAmount uint64, mintTime time.Time) (*models.CreditOperation, error) {
+	return RetryWithDeadlockHandling(ctx, "ConfirmGrant", func() (*models.CreditOperation, error) {
+		return r.confirmGrantInternal(ctx, licenseID, assetDID, txHash, logIndex, creditAmount, mintTime)
+	})
+}
+
+// confirmGrantInternal is the internal implementation of ConfirmGrant
+func (r *Repository) confirmGrantInternal(ctx context.Context, licenseID, assetDID string, txHash string, logIndex int, creditAmount uint64, mintTime time.Time) (*models.CreditOperation, error) {
 	if creditAmount == 0 {
 		return nil, fmt.Errorf("invalid amount: %d. Amount must be positive", creditAmount)
 	}
@@ -403,31 +431,19 @@ func (r *Repository) ConfirmGrant(ctx context.Context, licenseID, assetDID strin
 	return operation, nil
 }
 
-// calculateBalance calculates the balance for the given license and asset
-func (r *Repository) calculateBalance(ctx context.Context, tx *sql.Tx, licenseID, assetDID string) (int64, error) {
-	// use sql to add up the remaining amount of all confirmed/pending grants that are not expired
-	var sum int64
-	err := models.CreditGrants(
-		qm.Select("COALESCE(SUM(remaining_amount), 0)"),
-		models.CreditGrantWhere.LicenseID.EQ(licenseID),
-		models.CreditGrantWhere.AssetDid.EQ(assetDID),
-		models.CreditGrantWhere.Status.IN([]string{GrantStatusConfirmed, GrantStatusPending}),
-		models.CreditGrantWhere.ExpiresAt.GT(time.Now()),
-		models.CreditGrantWhere.RemainingAmount.GT(0),
-	).QueryRowContext(ctx, tx).Scan(&sum)
-	if err != nil {
-		return 0, fmt.Errorf("failed to calculate balance: %w", err)
-	}
-
-	return sum, nil
-}
-
 // GetBalance returns the balance for the given license and asset
 // 1. Get the outstanding debt
 // 2. If the debt is positive, return the debt
 // 3. If the debt is negative, return the balance
 // 4. If the debt is zero, return the balance
 func (r *Repository) GetBalance(ctx context.Context, licenseID, assetDID string) (int64, error) {
+	return RetryWithDeadlockHandling(ctx, "GetBalance", func() (int64, error) {
+		return r.getBalanceInternal(ctx, licenseID, assetDID)
+	})
+}
+
+// getBalanceInternal is the internal implementation of GetBalance
+func (r *Repository) getBalanceInternal(ctx context.Context, licenseID, assetDID string) (int64, error) {
 	debt, err := r.getOutstandingDebt(ctx, licenseID, assetDID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get outstanding debt: %w", err)
@@ -453,6 +469,25 @@ func (r *Repository) GetBalance(ctx context.Context, licenseID, assetDID string)
 	}
 
 	return balance, nil
+}
+
+// calculateBalance calculates the balance for the given license and asset
+func (r *Repository) calculateBalance(ctx context.Context, tx *sql.Tx, licenseID, assetDID string) (int64, error) {
+	// use sql to add up the remaining amount of all confirmed/pending grants that are not expired
+	var sum int64
+	err := models.CreditGrants(
+		qm.Select("COALESCE(SUM(remaining_amount), 0)"),
+		models.CreditGrantWhere.LicenseID.EQ(licenseID),
+		models.CreditGrantWhere.AssetDid.EQ(assetDID),
+		models.CreditGrantWhere.Status.IN([]string{GrantStatusConfirmed, GrantStatusPending}),
+		models.CreditGrantWhere.ExpiresAt.GT(time.Now()),
+		models.CreditGrantWhere.RemainingAmount.GT(0),
+	).QueryRowContext(ctx, tx).Scan(&sum)
+	if err != nil {
+		return 0, fmt.Errorf("failed to calculate balance: %w", err)
+	}
+
+	return sum, nil
 }
 
 // getActiveGrants retrieves active credit grants for a license/asset, ordered by expiration (FIFO)
