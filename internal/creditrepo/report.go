@@ -12,9 +12,9 @@ import (
 
 var (
 	creditSelect = fmt.Sprintf(`
-		SUM(CASE WHEN %s = '%s' THEN total_amount ELSE 0 END) - 
-		SUM(CASE WHEN %s = '%s' THEN total_amount ELSE 0 END)
-	`, models.CreditOperationWhere.OperationType, OperationTypeDeduction, models.CreditOperationWhere.OperationType, OperationTypeRefund)
+		COALESCE(SUM(CASE WHEN %s = '%s' THEN total_amount ELSE 0 END), 0) - 
+		COALESCE(SUM(CASE WHEN %s = '%s' THEN total_amount ELSE 0 END), 0) as usage_count
+	`, models.CreditOperationTableColumns.OperationType, OperationTypeDeduction, models.CreditOperationTableColumns.OperationType, OperationTypeRefund)
 )
 
 // UsageReport is a report of the usage of a license
@@ -71,14 +71,14 @@ func (r *Repository) GetLicenseUsageReport(ctx context.Context, licenseID string
 	var creditUsed int64
 	err := models.CreditOperations(
 		mods...,
-	).QueryRowContext(ctx, r.db).Scan(&assetCount)
+	).QueryRowContext(ctx, r.db).Scan(&assetCount, &creditUsed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate asset count: %w", err)
 	}
 
 	mods = []qm.QueryMod{
 		models.CreditOperationWhere.LicenseID.EQ(licenseID),
-		models.CreditOperationWhere.OperationType.EQ(GrantStatusConfirmed),
+		models.CreditOperationWhere.OperationType.EQ(OperationTypeGrantConfirm),
 		models.CreditOperationWhere.CreatedAt.GTE(null.TimeFrom(fromDate)),
 	}
 	if !toDate.IsZero() {
@@ -86,11 +86,11 @@ func (r *Repository) GetLicenseUsageReport(ctx context.Context, licenseID string
 	}
 	// Count credit grants purchased during the time period
 	// We count grants where status is 'confirmed' and created_at is within the date range
-	grantCount, err := models.CreditGrants(
+	grantCount, err := models.CreditOperations(
 		mods...,
 	).Count(ctx, r.db)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to count credit grant confirmation operations: %w", err)
 	}
 
 	report := &LicenseUsageReport{

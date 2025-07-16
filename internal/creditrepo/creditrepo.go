@@ -709,18 +709,7 @@ func (r *Repository) getGrantsFromOperation(ctx context.Context, tx *sql.Tx, ref
 
 // expire on the same date in the next month
 func getExpirationDate(mintTime time.Time) time.Time {
-	mintTime = mintTime.UTC()
-	currentMonth := mintTime.Month()
-	currentYear := mintTime.Year()
-	currentDay := mintTime.Day()
-	nextMonth := currentMonth + 1
-	nextYear := currentYear
-	if nextMonth > 12 {
-		nextMonth = 1
-		nextYear = currentYear + 1
-	}
-	expTime := time.Date(nextYear, nextMonth, currentDay, mintTime.Hour(), mintTime.Minute(), mintTime.Second(), mintTime.Nanosecond(), mintTime.Location())
-	return expTime
+	return mintTime.UTC().AddDate(0, 1, 0)
 }
 
 // rollbackTx is a helper function to handle transaction rollback with error checking

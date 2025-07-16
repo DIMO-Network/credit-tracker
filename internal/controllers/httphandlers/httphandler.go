@@ -62,7 +62,7 @@ func (v *HTTPController) GetLicenseUsageReport(fiberCtx *fiber.Ctx) error {
 
 	resp, err := v.creditTrackerRepo.GetLicenseUsageReport(fiberCtx.Context(), licenseID, fromDate, toDate)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Failed to check credits")
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to get license usage report")
 	}
 
 	return fiberCtx.JSON(resp)
