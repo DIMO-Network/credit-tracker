@@ -55,6 +55,16 @@ func (r *Repository) GetLicenseUsageReport(ctx context.Context, licenseID string
 		return nil, fmt.Errorf("fromDate and licenseID are required")
 	}
 
+	// Validate date ranges
+	if !toDate.IsZero() && fromDate.After(toDate) {
+		return nil, fmt.Errorf("fromDate must be before toDate")
+	}
+
+	// Validate future dates
+	if fromDate.After(time.Now()) {
+		return nil, fmt.Errorf("fromDate cannot be in the future")
+	}
+
 	// Count unique assets accessed during the time period
 	// We count distinct asset_did from credit_operations where operation_type is 'deduction'
 	// and the operation occurred within the specified date range
@@ -108,6 +118,16 @@ func (r *Repository) GetLicenseUsageReport(ctx context.Context, licenseID string
 func (r *Repository) GetLicenseAssetUsageReport(ctx context.Context, licenseID string, assetDID string, fromDate time.Time, toDate time.Time) (*LicenseAssetUsageReport, error) {
 	if fromDate.IsZero() || licenseID == "" || assetDID == "" {
 		return nil, fmt.Errorf("fromDate, licenseID, and assetDID are required")
+	}
+
+	// Validate date ranges
+	if !toDate.IsZero() && fromDate.After(toDate) {
+		return nil, fmt.Errorf("fromDate must be before toDate")
+	}
+
+	// Validate future dates
+	if fromDate.After(time.Now()) {
+		return nil, fmt.Errorf("fromDate cannot be in the future")
 	}
 
 	// Calculate credits used during the time period for this specific asset
