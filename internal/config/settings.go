@@ -7,7 +7,7 @@ import (
 	"github.com/DIMO-Network/shared/pkg/db"
 	"github.com/caarlos0/env/v11"
 	"github.com/ethereum/go-ethereum/common"
-	"gopkg.in/yaml.v3"
+	"github.com/joho/godotenv"
 )
 
 // Settings contains the application config.
@@ -28,24 +28,10 @@ func LoadSettings(filePath string) (*Settings, error) {
 
 	// First try to load from settings.yaml
 	if _, err := os.Stat(filePath); err == nil {
-		data, err := os.ReadFile(filePath)
+		err = godotenv.Load(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read settings from %s: %w", filePath, err)
+			return nil, fmt.Errorf("failed to load settings from %s: %w", filePath, err)
 		}
-
-		var yamlMap map[string]string
-		if err := yaml.Unmarshal(data, &yamlMap); err != nil {
-			return nil, fmt.Errorf("failed to parse settings from %s: %w", filePath, err)
-		}
-
-		opts := env.Options{
-			Environment: yamlMap,
-		}
-
-		if err := env.ParseWithOptions(settings, opts); err != nil {
-			return nil, fmt.Errorf("failed to parse settings from %s: %w", filePath, err)
-		}
-		return settings, nil
 	}
 
 	// Then override with environment variables

@@ -30,11 +30,11 @@ help:
 	@echo ""
 
 build: ## build the binary
-	@CGO_ENABLED=1 GOOS=$(GOOS) GOARCH=$(ARCH) \
+	@CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(ARCH) \
 		go build -o $(PATHINSTBIN)/$(BIN_NAME) ./cmd/$(BIN_NAME)
 
 run: build ## run the binary
-	@./$(PATHINSTBIN)/$(BIN_NAME)
+	@$(PATHINSTBIN)/$(BIN_NAME)
 
 all: clean target
 
