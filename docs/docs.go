@@ -152,19 +152,32 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "assetDid": {
+                    "description": "Asset DID",
+                    "type": "string"
+                },
+                "currentCreditsRemaining": {
+                    "description": "Number of credits remaining at the current time, this is not affected by the time period",
+                    "type": "integer"
+                },
+                "fromDate": {
+                    "description": "From date",
                     "type": "string"
                 },
                 "licenseId": {
+                    "description": "License ID",
                     "type": "string"
                 },
                 "numOfCreditsGrantsPurchased": {
-                    "type": "integer"
-                },
-                "numOfCreditsRemaining": {
+                    "description": "Number of credit grants purchased during the time period",
                     "type": "integer"
                 },
                 "numOfCreditsUsed": {
+                    "description": "Number of credits used during the time period",
                     "type": "integer"
+                },
+                "toDate": {
+                    "description": "To date",
+                    "type": "string"
                 }
             }
         },
