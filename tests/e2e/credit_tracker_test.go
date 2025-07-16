@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/credit-tracker/internal/config"
 	ctgrpc "github.com/DIMO-Network/credit-tracker/pkg/grpc"
 	"github.com/DIMO-Network/credit-tracker/tests"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -65,17 +64,6 @@ func TestCreditTrackerEndToEnd(t *testing.T) {
 	defer conn.Close() //nolint:errcheck
 
 	client := ctgrpc.NewCreditTrackerClient(conn)
-
-	t.Run("GetBalance", func(t *testing.T) {
-		req := &ctgrpc.GetBalanceRequest{
-			AssetDid:         "did:erc721:80002:0x45fbCD3ef7361d156e8b16F5538AE36DEdf61Da8:123",
-			DeveloperLicense: "test-license",
-		}
-
-		resp, err := client.GetBalance(ctx, req)
-		require.NoError(t, err)
-		assert.Equal(t, int64(0), resp.RemainingCredits)
-	})
 
 	t.Run("DeductCredits", func(t *testing.T) {
 		req := &ctgrpc.CreditDeductRequest{

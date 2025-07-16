@@ -29,25 +29,11 @@ enum ErrorDomain {
 
 // Credit tracking service definition
 service CreditTracker {
-  // GetBalance verifies the available credits for a given license and token
-  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {}
-  
   // DeductCredits attempts to deduct credits from a given license and token
   rpc DeductCredits(CreditDeductRequest) returns (CreditDeductResponse) {}
 
   // RefundCredits refunds credits to a given license and token
   rpc RefundCredits(RefundCreditsRequest) returns (RefundCreditsResponse) {}
-}
-
-// Request message for checking credits
-message GetBalanceRequest {
-  string developer_license = 1;
-  string asset_did = 2;
-}
-
-// Response message for credit check
-message GetBalanceResponse {
-  int64 remaining_credits = 1;
 }
 
 // Request message for deducting credits

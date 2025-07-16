@@ -174,104 +174,6 @@ func (ErrorDomain) EnumDescriptor() ([]byte, []int) {
 	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{2}
 }
 
-// Request message for checking credits
-type GetBalanceRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	DeveloperLicense string                 `protobuf:"bytes,1,opt,name=developer_license,json=developerLicense,proto3" json:"developer_license,omitempty"`
-	AssetDid         string                 `protobuf:"bytes,2,opt,name=asset_did,json=assetDid,proto3" json:"asset_did,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *GetBalanceRequest) Reset() {
-	*x = GetBalanceRequest{}
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetBalanceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetBalanceRequest) ProtoMessage() {}
-
-func (x *GetBalanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetBalanceRequest.ProtoReflect.Descriptor instead.
-func (*GetBalanceRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *GetBalanceRequest) GetDeveloperLicense() string {
-	if x != nil {
-		return x.DeveloperLicense
-	}
-	return ""
-}
-
-func (x *GetBalanceRequest) GetAssetDid() string {
-	if x != nil {
-		return x.AssetDid
-	}
-	return ""
-}
-
-// Response message for credit check
-type GetBalanceResponse struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	RemainingCredits int64                  `protobuf:"varint,1,opt,name=remaining_credits,json=remainingCredits,proto3" json:"remaining_credits,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *GetBalanceResponse) Reset() {
-	*x = GetBalanceResponse{}
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetBalanceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetBalanceResponse) ProtoMessage() {}
-
-func (x *GetBalanceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetBalanceResponse.ProtoReflect.Descriptor instead.
-func (*GetBalanceResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetBalanceResponse) GetRemainingCredits() int64 {
-	if x != nil {
-		return x.RemainingCredits
-	}
-	return 0
-}
-
 // Request message for deducting credits
 type CreditDeductRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
@@ -286,7 +188,7 @@ type CreditDeductRequest struct {
 
 func (x *CreditDeductRequest) Reset() {
 	*x = CreditDeductRequest{}
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[2]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -298,7 +200,7 @@ func (x *CreditDeductRequest) String() string {
 func (*CreditDeductRequest) ProtoMessage() {}
 
 func (x *CreditDeductRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[2]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +213,7 @@ func (x *CreditDeductRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreditDeductRequest.ProtoReflect.Descriptor instead.
 func (*CreditDeductRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{2}
+	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CreditDeductRequest) GetDeveloperLicense() string {
@@ -358,7 +260,7 @@ type CreditDeductResponse struct {
 
 func (x *CreditDeductResponse) Reset() {
 	*x = CreditDeductResponse{}
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[3]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -370,7 +272,7 @@ func (x *CreditDeductResponse) String() string {
 func (*CreditDeductResponse) ProtoMessage() {}
 
 func (x *CreditDeductResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[3]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -383,7 +285,7 @@ func (x *CreditDeductResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreditDeductResponse.ProtoReflect.Descriptor instead.
 func (*CreditDeductResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{3}
+	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{1}
 }
 
 // Request message for refunding credits
@@ -397,7 +299,7 @@ type RefundCreditsRequest struct {
 
 func (x *RefundCreditsRequest) Reset() {
 	*x = RefundCreditsRequest{}
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[4]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -409,7 +311,7 @@ func (x *RefundCreditsRequest) String() string {
 func (*RefundCreditsRequest) ProtoMessage() {}
 
 func (x *RefundCreditsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[4]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -422,7 +324,7 @@ func (x *RefundCreditsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefundCreditsRequest.ProtoReflect.Descriptor instead.
 func (*RefundCreditsRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{4}
+	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RefundCreditsRequest) GetReferenceId() string {
@@ -448,7 +350,7 @@ type RefundCreditsResponse struct {
 
 func (x *RefundCreditsResponse) Reset() {
 	*x = RefundCreditsResponse{}
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[5]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -460,7 +362,7 @@ func (x *RefundCreditsResponse) String() string {
 func (*RefundCreditsResponse) ProtoMessage() {}
 
 func (x *RefundCreditsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[5]
+	mi := &file_pkg_grpc_credit_tracker_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,19 +375,14 @@ func (x *RefundCreditsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefundCreditsResponse.ProtoReflect.Descriptor instead.
 func (*RefundCreditsResponse) Descriptor() ([]byte, []int) {
-	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{5}
+	return file_pkg_grpc_credit_tracker_proto_rawDescGZIP(), []int{3}
 }
 
 var File_pkg_grpc_credit_tracker_proto protoreflect.FileDescriptor
 
 const file_pkg_grpc_credit_tracker_proto_rawDesc = "" +
 	"\n" +
-	"\x1dpkg/grpc/credit-tracker.proto\x12\x04grpc\"]\n" +
-	"\x11GetBalanceRequest\x12+\n" +
-	"\x11developer_license\x18\x01 \x01(\tR\x10developerLicense\x12\x1b\n" +
-	"\tasset_did\x18\x02 \x01(\tR\bassetDid\"A\n" +
-	"\x12GetBalanceResponse\x12+\n" +
-	"\x11remaining_credits\x18\x01 \x01(\x03R\x10remainingCredits\"\xb5\x01\n" +
+	"\x1dpkg/grpc/credit-tracker.proto\x12\x04grpc\"\xb5\x01\n" +
 	"\x13CreditDeductRequest\x12+\n" +
 	"\x11developer_license\x18\x01 \x01(\tR\x10developerLicense\x12\x1b\n" +
 	"\tasset_did\x18\x02 \x01(\tR\bassetDid\x12\x16\n" +
@@ -509,10 +406,8 @@ const file_pkg_grpc_credit_tracker_proto_rawDesc = "" +
 	"&ERROR_REASON_INVALID_DEVELOPER_LICENSE\x10\x03*L\n" +
 	"\vErrorDomain\x12\x1c\n" +
 	"\x18ERROR_DOMAIN_UNSPECIFIED\x10\x00\x12\x1f\n" +
-	"\x1bERROR_DOMAIN_CREDIT_TRACKER\x10\x012\xe8\x01\n" +
-	"\rCreditTracker\x12A\n" +
-	"\n" +
-	"GetBalance\x12\x17.grpc.GetBalanceRequest\x1a\x18.grpc.GetBalanceResponse\"\x00\x12H\n" +
+	"\x1bERROR_DOMAIN_CREDIT_TRACKER\x10\x012\xa5\x01\n" +
+	"\rCreditTracker\x12H\n" +
 	"\rDeductCredits\x12\x19.grpc.CreditDeductRequest\x1a\x1a.grpc.CreditDeductResponse\"\x00\x12J\n" +
 	"\rRefundCredits\x12\x1a.grpc.RefundCreditsRequest\x1a\x1b.grpc.RefundCreditsResponse\"\x00B1Z/github.com/DIMO-Network/credit-tracker/pkg/grpcb\x06proto3"
 
@@ -529,27 +424,23 @@ func file_pkg_grpc_credit_tracker_proto_rawDescGZIP() []byte {
 }
 
 var file_pkg_grpc_credit_tracker_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_pkg_grpc_credit_tracker_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_pkg_grpc_credit_tracker_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_pkg_grpc_credit_tracker_proto_goTypes = []any{
 	(MetadataKey)(0),              // 0: grpc.MetadataKey
 	(ErrorReason)(0),              // 1: grpc.ErrorReason
 	(ErrorDomain)(0),              // 2: grpc.ErrorDomain
-	(*GetBalanceRequest)(nil),     // 3: grpc.GetBalanceRequest
-	(*GetBalanceResponse)(nil),    // 4: grpc.GetBalanceResponse
-	(*CreditDeductRequest)(nil),   // 5: grpc.CreditDeductRequest
-	(*CreditDeductResponse)(nil),  // 6: grpc.CreditDeductResponse
-	(*RefundCreditsRequest)(nil),  // 7: grpc.RefundCreditsRequest
-	(*RefundCreditsResponse)(nil), // 8: grpc.RefundCreditsResponse
+	(*CreditDeductRequest)(nil),   // 3: grpc.CreditDeductRequest
+	(*CreditDeductResponse)(nil),  // 4: grpc.CreditDeductResponse
+	(*RefundCreditsRequest)(nil),  // 5: grpc.RefundCreditsRequest
+	(*RefundCreditsResponse)(nil), // 6: grpc.RefundCreditsResponse
 }
 var file_pkg_grpc_credit_tracker_proto_depIdxs = []int32{
-	3, // 0: grpc.CreditTracker.GetBalance:input_type -> grpc.GetBalanceRequest
-	5, // 1: grpc.CreditTracker.DeductCredits:input_type -> grpc.CreditDeductRequest
-	7, // 2: grpc.CreditTracker.RefundCredits:input_type -> grpc.RefundCreditsRequest
-	4, // 3: grpc.CreditTracker.GetBalance:output_type -> grpc.GetBalanceResponse
-	6, // 4: grpc.CreditTracker.DeductCredits:output_type -> grpc.CreditDeductResponse
-	8, // 5: grpc.CreditTracker.RefundCredits:output_type -> grpc.RefundCreditsResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	3, // 0: grpc.CreditTracker.DeductCredits:input_type -> grpc.CreditDeductRequest
+	5, // 1: grpc.CreditTracker.RefundCredits:input_type -> grpc.RefundCreditsRequest
+	4, // 2: grpc.CreditTracker.DeductCredits:output_type -> grpc.CreditDeductResponse
+	6, // 3: grpc.CreditTracker.RefundCredits:output_type -> grpc.RefundCreditsResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -566,7 +457,7 @@ func file_pkg_grpc_credit_tracker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_grpc_credit_tracker_proto_rawDesc), len(file_pkg_grpc_credit_tracker_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   6,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

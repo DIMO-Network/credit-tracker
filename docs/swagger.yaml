@@ -1,3 +1,38 @@
+definitions:
+  github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseAssetUsageReport:
+    properties:
+      assetDid:
+        type: string
+      licenseId:
+        type: string
+      numOfCreditsGrantsPurchased:
+        type: integer
+      numOfCreditsRemaining:
+        type: integer
+      numOfCreditsUsed:
+        type: integer
+    type: object
+  github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseUsageReport:
+    properties:
+      fromDate:
+        description: From date
+        type: string
+      licenseId:
+        description: License ID
+        type: string
+      numOfAssets:
+        description: Number of assets accessed in a given time period
+        type: integer
+      numOfCreditsGrantsPurchased:
+        description: Number of credit grants purchased during the time period
+        type: integer
+      numOfCreditsUsed:
+        description: Number of credits used during the time period
+        type: integer
+      toDate:
+        description: To date
+        type: string
+    type: object
 info:
   contact: {}
   title: DIMO Attestation API
@@ -19,21 +54,30 @@ paths:
       summary: Show the status of server.
       tags:
       - root
-  /v1/credits/{developerLicense}/{tokenId}:
+  /v1/credits/{licenseId}/assets/{assetId}/usage:
     get:
       consumes:
       - application/json
-      description: Get the remaining credits for a developer license and asset DID
+      description: Get detailed usage report for a specific license and asset
       parameters:
-      - description: Developer License ID
+      - description: License ID
         in: path
-        name: developerLicense
+        name: licenseId
         required: true
         type: string
-      - description: Token ID
+      - description: Asset ID
         in: path
-        name: tokenId
+        name: assetId
         required: true
+        type: string
+      - description: From Date
+        in: query
+        name: fromDate
+        required: true
+        type: string
+      - description: To Date
+        in: query
+        name: toDate
         type: string
       produces:
       - application/json
@@ -41,11 +85,42 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseAssetUsageReport'
       security:
       - BearerAuth: []
-      summary: Get Developer Credits
+      summary: Get License Asset Usage Report
+      tags:
+      - Credits
+  /v1/credits/{licenseId}/usage:
+    get:
+      consumes:
+      - application/json
+      description: Get usage report for a license across all assets
+      parameters:
+      - description: License ID
+        in: path
+        name: licenseId
+        required: true
+        type: string
+      - description: From Date
+        in: query
+        name: fromDate
+        required: true
+        type: string
+      - description: To Date
+        in: query
+        name: toDate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseUsageReport'
+      security:
+      - BearerAuth: []
+      summary: Get License Usage Report
       tags:
       - Credits
 securityDefinitions:

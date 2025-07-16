@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	CreditTracker_GetBalance_FullMethodName    = "/grpc.CreditTracker/GetBalance"
 	CreditTracker_DeductCredits_FullMethodName = "/grpc.CreditTracker/DeductCredits"
 	CreditTracker_RefundCredits_FullMethodName = "/grpc.CreditTracker/RefundCredits"
 )
@@ -28,8 +27,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CreditTrackerClient interface {
-	// GetBalance verifies the available credits for a given license and token
-	GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error)
 	// DeductCredits attempts to deduct credits from a given license and token
 	DeductCredits(ctx context.Context, in *CreditDeductRequest, opts ...grpc.CallOption) (*CreditDeductResponse, error)
 	// RefundCredits refunds credits to a given license and token
@@ -42,15 +39,6 @@ type creditTrackerClient struct {
 
 func NewCreditTrackerClient(cc grpc.ClientConnInterface) CreditTrackerClient {
 	return &creditTrackerClient{cc}
-}
-
-func (c *creditTrackerClient) GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error) {
-	out := new(GetBalanceResponse)
-	err := c.cc.Invoke(ctx, CreditTracker_GetBalance_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *creditTrackerClient) DeductCredits(ctx context.Context, in *CreditDeductRequest, opts ...grpc.CallOption) (*CreditDeductResponse, error) {
@@ -75,8 +63,6 @@ func (c *creditTrackerClient) RefundCredits(ctx context.Context, in *RefundCredi
 // All implementations must embed UnimplementedCreditTrackerServer
 // for forward compatibility
 type CreditTrackerServer interface {
-	// GetBalance verifies the available credits for a given license and token
-	GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error)
 	// DeductCredits attempts to deduct credits from a given license and token
 	DeductCredits(context.Context, *CreditDeductRequest) (*CreditDeductResponse, error)
 	// RefundCredits refunds credits to a given license and token
@@ -88,9 +74,6 @@ type CreditTrackerServer interface {
 type UnimplementedCreditTrackerServer struct {
 }
 
-func (UnimplementedCreditTrackerServer) GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBalance not implemented")
-}
 func (UnimplementedCreditTrackerServer) DeductCredits(context.Context, *CreditDeductRequest) (*CreditDeductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeductCredits not implemented")
 }
@@ -108,24 +91,6 @@ type UnsafeCreditTrackerServer interface {
 
 func RegisterCreditTrackerServer(s grpc.ServiceRegistrar, srv CreditTrackerServer) {
 	s.RegisterService(&CreditTracker_ServiceDesc, srv)
-}
-
-func _CreditTracker_GetBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBalanceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CreditTrackerServer).GetBalance(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: CreditTracker_GetBalance_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CreditTrackerServer).GetBalance(ctx, req.(*GetBalanceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _CreditTracker_DeductCredits_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -171,10 +136,6 @@ var CreditTracker_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "grpc.CreditTracker",
 	HandlerType: (*CreditTrackerServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetBalance",
-			Handler:    _CreditTracker_GetBalance_Handler,
-		},
 		{
 			MethodName: "DeductCredits",
 			Handler:    _CreditTracker_DeductCredits_Handler,
