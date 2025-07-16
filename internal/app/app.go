@@ -11,7 +11,6 @@ import (
 	"github.com/DIMO-Network/credit-tracker/internal/controllers/httphandlers"
 	"github.com/DIMO-Network/credit-tracker/internal/controllers/rpc"
 	"github.com/DIMO-Network/credit-tracker/internal/creditrepo"
-	"github.com/DIMO-Network/credit-tracker/internal/creditservice"
 	"github.com/DIMO-Network/credit-tracker/internal/events"
 	ctgrpc "github.com/DIMO-Network/credit-tracker/pkg/grpc"
 	"github.com/DIMO-Network/shared/pkg/db"
@@ -61,12 +60,13 @@ func setupHttpServer(ctx context.Context, settings *config.Settings, ctrl *httph
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	jwtAuth := auth.Middleware(settings)
 	authenticated := app.Group("", jwtAuth)
-	authenticated.Get("/v1/credits/:developerLicense/:assetDid", ctrl.GetDeveloperCredits)
+	authenticated.Get("/v1/credits/:licenseId/usage", ctrl.GetLicenseUsageReport)
+	authenticated.Get("/v1/credits/:licenseId/assets/:assetId/usage", ctrl.GetLicenseAssetUsageReport)
 
 	return app
 }
 
-func setupRPCServer(settings *config.Settings, rpcCtrl *rpc.Server) *grpc.Server {
+func setupRPCServer(settings *config.Settings, rpcCtrl *rpc.CreditTrackerServer) *grpc.Server {
 	grpcPanic := metrics.GRPCPanicker{}
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
@@ -132,16 +132,15 @@ func HealthCheck(ctx *fiber.Ctx) error {
 }
 
 // createControllers creates a new controllers with the given settings.
-func createControllers(ctx context.Context, settings *config.Settings) (*httphandlers.HTTPController, *rpc.Server, error) {
+func createControllers(ctx context.Context, settings *config.Settings) (*httphandlers.HTTPController, *rpc.CreditTrackerServer, error) {
 	pdb := db.NewDbConnectionFromSettings(ctx, &settings.DB, true)
 	logger := zerolog.Ctx(ctx)
 	pdb.WaitForDB(*logger)
 
 	repo := creditrepo.New(pdb.DBS().GetWriterConn())
 	contractProcessor := events.NewContractProcessor(repo)
-	creditTrackerService := creditservice.NewCreditTrackerService(repo, contractProcessor)
-	server := rpc.NewServer(creditTrackerService)
-	ctrl := httphandlers.NewHTTPController(creditTrackerService, settings)
+	server := rpc.NewServer(repo, contractProcessor)
+	ctrl := httphandlers.NewHTTPController(repo, settings)
 
 	return ctrl, server, nil
 }

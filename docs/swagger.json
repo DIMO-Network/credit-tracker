@@ -30,14 +30,14 @@
                 }
             }
         },
-        "/v1/credits/{developerLicense}/{tokenId}": {
+        "/v1/credits/{licenseId}/assets/{assetId}/usage": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get the remaining credits for a developer license and asset DID",
+                "description": "Get detailed usage report for a specific license and asset",
                 "consumes": [
                     "application/json"
                 ],
@@ -47,31 +47,157 @@
                 "tags": [
                     "Credits"
                 ],
-                "summary": "Get Developer Credits",
+                "summary": "Get License Asset Usage Report",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Developer License ID",
-                        "name": "developerLicense",
+                        "description": "License ID",
+                        "name": "licenseId",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Token ID",
-                        "name": "tokenId",
+                        "description": "Asset ID",
+                        "name": "assetId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "From Date",
+                        "name": "fromDate",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "To Date",
+                        "name": "toDate",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseAssetUsageReport"
                         }
                     }
+                }
+            }
+        },
+        "/v1/credits/{licenseId}/usage": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get usage report for a license across all assets",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Credits"
+                ],
+                "summary": "Get License Usage Report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "License ID",
+                        "name": "licenseId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "From Date",
+                        "name": "fromDate",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "To Date",
+                        "name": "toDate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseUsageReport"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseAssetUsageReport": {
+            "type": "object",
+            "properties": {
+                "assetDid": {
+                    "description": "Asset DID",
+                    "type": "string"
+                },
+                "currentCreditsRemaining": {
+                    "description": "Number of credits remaining at the current time, this is not affected by the time period",
+                    "type": "integer"
+                },
+                "fromDate": {
+                    "description": "From date",
+                    "type": "string"
+                },
+                "licenseId": {
+                    "description": "License ID",
+                    "type": "string"
+                },
+                "numOfCreditsGrantsPurchased": {
+                    "description": "Number of credit grants purchased during the time period",
+                    "type": "integer"
+                },
+                "numOfCreditsUsed": {
+                    "description": "Number of credits used during the time period",
+                    "type": "integer"
+                },
+                "toDate": {
+                    "description": "To date",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_DIMO-Network_credit-tracker_internal_creditrepo.LicenseUsageReport": {
+            "type": "object",
+            "properties": {
+                "fromDate": {
+                    "description": "From date",
+                    "type": "string"
+                },
+                "licenseId": {
+                    "description": "License ID",
+                    "type": "string"
+                },
+                "numOfAssets": {
+                    "description": "Number of assets accessed in a given time period",
+                    "type": "integer"
+                },
+                "numOfCreditsGrantsPurchased": {
+                    "description": "Number of credit grants purchased during the time period",
+                    "type": "integer"
+                },
+                "numOfCreditsUsed": {
+                    "description": "Number of credits used during the time period",
+                    "type": "integer"
+                },
+                "toDate": {
+                    "description": "To date",
+                    "type": "string"
                 }
             }
         }

@@ -1,72 +1,114 @@
 package httphandlers
 
 import (
-	"math/big"
+	"time"
 
-	"github.com/DIMO-Network/cloudevent"
 	"github.com/DIMO-Network/credit-tracker/internal/auth"
 	"github.com/DIMO-Network/credit-tracker/internal/config"
-	"github.com/DIMO-Network/credit-tracker/internal/creditservice"
-	"github.com/DIMO-Network/credit-tracker/pkg/grpc"
+	"github.com/DIMO-Network/credit-tracker/internal/creditrepo"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
 )
 
 // HTTPController handles VIN VC-related http requests.
 type HTTPController struct {
-	creditTrackerService *creditservice.CreditTrackerService
-	ChainID              uint64
-	VehicleContractAddr  common.Address
+	creditTrackerRepo   *creditrepo.Repository
+	ChainID             uint64
+	VehicleContractAddr common.Address
 }
 
 // NewHTTPController creates a new http VCController.
-func NewHTTPController(service *creditservice.CreditTrackerService, settings *config.Settings) *HTTPController {
+func NewHTTPController(service *creditrepo.Repository, settings *config.Settings) *HTTPController {
 	return &HTTPController{
-		creditTrackerService: service,
-		ChainID:              settings.DIMORegistryChainID,
-		VehicleContractAddr:  settings.VehicleNFTContractAddress,
+		creditTrackerRepo:   service,
+		ChainID:             settings.DIMORegistryChainID,
+		VehicleContractAddr: settings.VehicleNFTContractAddress,
 	}
 }
 
-// @Summary Get Developer Credits
-// @Description Get the remaining credits for a developer license and asset DID
+// @Summary Get License Usage Report
+// @Description Get usage report for a license across all assets
 // @Tags Credits
 // @Accept json
 // @Produce json
-// @Param  developerLicense path string true "Developer License ID"
-// @Param  tokenId path string true "Token ID"
-// @Success 200 {object} map[string]interface{}
+// @Param  licenseId path string true "License ID"
+// @Param  fromDate query string true "From Date"
+// @Param  toDate query string false "To Date"
+// @Success 200 {object} creditrepo.LicenseUsageReport
 // @Security     BearerAuth
-// @Router /v1/credits/{developerLicense}/{tokenId} [get]
-func (v *HTTPController) GetDeveloperCredits(fiberCtx *fiber.Ctx) error {
+// @Router /v1/credits/{licenseId}/usage [get]
+func (v *HTTPController) GetLicenseUsageReport(fiberCtx *fiber.Ctx) error {
 	dexUser, ok := auth.GetDexJWT(fiberCtx)
 	if !ok {
 		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized could not determine user")
 	}
-	developerLicense := fiberCtx.Params("developerLicense")
-	tokenIDParam := fiberCtx.Params("tokenId")
-	if dexUser.ProviderID != developerLicense {
-		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized developer license does not match")
+	licenseID := fiberCtx.Params("licenseId")
+	if dexUser.EthereumAddress != licenseID {
+		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized license does not match")
 	}
-	tokenID, ok := new(big.Int).SetString(tokenIDParam, 10)
-	if !ok {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid token ID")
-	}
-	req := &grpc.GetBalanceRequest{
-		DeveloperLicense: developerLicense,
-		AssetDid: cloudevent.ERC721DID{
-			ChainID:         v.ChainID,
-			ContractAddress: v.VehicleContractAddr,
-			TokenID:         tokenID,
-		}.String(),
-	}
-
-	resp, err := v.creditTrackerService.GetBalance(fiberCtx.Context(), req)
+	fromDateStr := fiberCtx.Query("fromDate")
+	toDateStr := fiberCtx.Query("toDate")
+	fromDate, err := time.Parse(time.RFC3339, fromDateStr)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Failed to check credits")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid fromDate")
+	}
+	var toDate time.Time
+	if toDateStr != "" {
+		toDate, err = time.Parse(time.RFC3339, toDateStr)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid toDate")
+		}
 	}
 
-	return fiberCtx.JSON(fiber.Map{
-		"remainingCredits": resp.RemainingCredits,
-	})
+	resp, err := v.creditTrackerRepo.GetLicenseUsageReport(fiberCtx.Context(), licenseID, fromDate, toDate)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to get license usage report")
+	}
+
+	return fiberCtx.JSON(resp)
+}
+
+// @Summary Get License Asset Usage Report
+// @Description Get detailed usage report for a specific license and asset
+// @Tags Credits
+// @Accept json
+// @Produce json
+// @Param  licenseId path string true "License ID"
+// @Param  assetId path string true "Asset ID"
+// @Param  fromDate query string true "From Date"
+// @Param  toDate query string false "To Date"
+// @Success 200 {object} creditrepo.LicenseAssetUsageReport
+// @Security     BearerAuth
+// @Router /v1/credits/{licenseId}/assets/{assetId}/usage [get]
+func (v *HTTPController) GetLicenseAssetUsageReport(fiberCtx *fiber.Ctx) error {
+	dexUser, ok := auth.GetDexJWT(fiberCtx)
+	if !ok {
+		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized could not determine user")
+	}
+	licenseID := fiberCtx.Params("licenseId")
+	assetID := fiberCtx.Params("assetId")
+	if dexUser.EthereumAddress != licenseID {
+		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized license does not match")
+	}
+
+	fromDateStr := fiberCtx.Query("fromDate")
+	toDateStr := fiberCtx.Query("toDate")
+	fromDate, err := time.Parse(time.RFC3339, fromDateStr)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid fromDate")
+	}
+	var toDate time.Time
+	if toDateStr != "" {
+		toDate, err = time.Parse(time.RFC3339, toDateStr)
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Invalid toDate")
+		}
+	}
+
+	resp, err := v.creditTrackerRepo.GetLicenseAssetUsageReport(fiberCtx.Context(), licenseID, assetID, fromDate, toDate)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to get asset usage report")
+	}
+
+	return fiberCtx.JSON(resp)
 }

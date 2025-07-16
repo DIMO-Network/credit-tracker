@@ -1,4 +1,4 @@
-package creditservice
+package rpc
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
