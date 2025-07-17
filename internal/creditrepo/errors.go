@@ -12,9 +12,13 @@ const (
 	// DeadlockError is returned when a deadlock error occurs.
 	DeadlockError = pq.ErrorCode("40P01")
 )
+const (
+	// InsufficientCreditsErr is returned when the credit balance is insufficient to perform the operation.
+	InsufficientCreditsErr = constError("insufficient credits: would result in negative balance")
 
-// InsufficientCreditsErr is returned when the credit balance is insufficient to perform the operation.
-const InsufficientCreditsErr = constError("insufficient credits: would result in negative balance")
+	// GrantAlreadyExistsErr is returned when a grant already exists for the given license and asset.
+	GrantAlreadyExistsErr = constError("active grant already exists for the given license and asset")
+)
 
 type constError string
 

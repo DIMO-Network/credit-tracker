@@ -17,7 +17,8 @@ import (
 )
 
 type GrantRepository interface {
-	CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint64, txHash string, mintTime time.Time) (*models.CreditOperation, error)
+	CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint64, mintTime time.Time) (*models.CreditGrant, error)
+	UpdateGrantTxHash(ctx context.Context, grant *models.CreditGrant, txHash string) (*models.CreditGrant, error)
 	ConfirmGrant(ctx context.Context, licenseID string, assetDID string, txHash string, logIndex int, amount uint64, mintTime time.Time) (*models.CreditOperation, error)
 }
 
@@ -31,10 +32,14 @@ func NewContractProcessor(grantRepo GrantRepository) *ContractProcessor {
 }
 
 func (c *ContractProcessor) CreateGrant(ctx context.Context, licenseID string, assetDID string, amount uint64) (*types.Transaction, error) {
-	tx := tmpFakeTx()
-	_, err := c.grantRepo.CreateGrant(ctx, licenseID, assetDID, amount, tx.Hash().String(), time.Now())
+	grant, err := c.grantRepo.CreateGrant(ctx, licenseID, assetDID, amount, time.Now())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create grant: %w", err)
+	}
+	tx := tmpFakeTx()
+	_, err = c.grantRepo.UpdateGrantTxHash(ctx, grant, tx.Hash().String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to update grant tx hash: %w", err)
 	}
 
 	// TODO: remove this once we have a real event handler is implemented
