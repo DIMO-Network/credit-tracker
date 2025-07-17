@@ -150,6 +150,10 @@ func (s *CreditTrackerServer) addBurnCredits(ctx context.Context, developerLicen
 	// Add burn credits
 	_, err := s.contractProcessor.CreateGrant(ctx, developerLicense, assetDid, creditsFromBurn)
 	if err != nil {
+		if errors.Is(err, creditrepo.GrantAlreadyExistsErr) {
+			// Someone else has already created a grant for this license and asset, so we can just return
+			return nil
+		}
 		return fmt.Errorf("failed to create grant transaction: %w", err)
 	}
 	// Record burn credit metric

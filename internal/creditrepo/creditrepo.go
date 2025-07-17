@@ -254,14 +254,14 @@ func (r *Repository) refundCreditsInternal(ctx context.Context, appName, referen
 // 1. Create a new grant record
 // 2. Create a new operation record
 // 3. Settle any debt if any
-func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string, creditAmount uint64, txHash string, mintTime time.Time) (*models.CreditOperation, error) {
-	return RetryWithDeadlockHandling(ctx, "CreateGrant", func() (*models.CreditOperation, error) {
-		return r.createGrantInternal(ctx, licenseID, assetDID, creditAmount, txHash, mintTime)
+func (r *Repository) CreateGrant(ctx context.Context, licenseID, assetDID string, creditAmount uint64, mintTime time.Time) (*models.CreditGrant, error) {
+	return RetryWithDeadlockHandling(ctx, "CreateGrant", func() (*models.CreditGrant, error) {
+		return r.createGrantInternal(ctx, licenseID, assetDID, creditAmount, mintTime)
 	})
 }
 
 // createGrantInternal is the internal implementation of CreateGrant
-func (r *Repository) createGrantInternal(ctx context.Context, licenseID, assetDID string, creditAmount uint64, txHash string, mintTime time.Time) (*models.CreditOperation, error) {
+func (r *Repository) createGrantInternal(ctx context.Context, licenseID, assetDID string, creditAmount uint64, mintTime time.Time) (*models.CreditGrant, error) {
 	if creditAmount == 0 {
 		return nil, fmt.Errorf("invalid amount: %d. Amount must be positive", creditAmount)
 	}
@@ -278,6 +278,14 @@ func (r *Repository) createGrantInternal(ctx context.Context, licenseID, assetDI
 	}
 	defer rollbackTx(ctx, tx)
 
+	grants, err := r.getActiveGrants(ctx, tx, licenseID, assetDID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active grants: %w", err)
+	}
+	if len(grants) > 0 {
+		return nil, GrantAlreadyExistsErr
+	}
+
 	// Create grant record
 	grant := &models.CreditGrant{
 		LicenseID:       licenseID,
@@ -285,7 +293,6 @@ func (r *Repository) createGrantInternal(ctx context.Context, licenseID, assetDI
 		InitialAmount:   amount,
 		RemainingAmount: amount,
 		Status:          GrantStatusPending,
-		TXHash:          txHash,
 		ExpiresAt:       getExpirationDate(mintTime),
 	}
 
@@ -327,7 +334,23 @@ func (r *Repository) createGrantInternal(ctx context.Context, licenseID, assetDI
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	return operation, nil
+	return grant, nil
+}
+
+// UpdateGrantTxHash updates the tx hash for the given grant
+func (r *Repository) UpdateGrantTxHash(ctx context.Context, grant *models.CreditGrant, txHash string) (*models.CreditGrant, error) {
+	return RetryWithDeadlockHandling(ctx, "updateGrantTxHash", func() (*models.CreditGrant, error) {
+		return r.updateGrantTxHashInternal(ctx, grant, txHash)
+	})
+}
+
+func (r *Repository) updateGrantTxHashInternal(ctx context.Context, grant *models.CreditGrant, txHash string) (*models.CreditGrant, error) {
+	grant.TXHash = txHash
+	grant.UpdatedAt = null.TimeFrom(time.Now())
+	if _, err := grant.Update(ctx, r.db, boil.Whitelist(models.CreditGrantColumns.TXHash, models.CreditGrantColumns.UpdatedAt)); err != nil {
+		return nil, fmt.Errorf("failed to update grant: %w", err)
+	}
+	return grant, nil
 }
 
 // confirmGrant confirms a grant for the given license and asset

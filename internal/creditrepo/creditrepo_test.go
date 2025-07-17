@@ -703,11 +703,14 @@ func TestCreateGrant(t *testing.T) {
 		t.Parallel()
 		licenseID := "test-license-grant-create"
 		// Test: Create a new grant
-		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), testTXHash, time.Now())
+		grant, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), time.Now())
+		require.NoError(t, err)
+		_, err = repo.UpdateGrantTxHash(ctx, grant, testTXHash)
 		require.NoError(t, err)
 
 		// Verify: Check grant record
-		grant, err := models.CreditGrants(
+
+		grant, err = models.CreditGrants(
 			models.CreditGrantWhere.LicenseID.EQ(licenseID),
 			models.CreditGrantWhere.AssetDid.EQ(testAssetID),
 		).One(ctx, db)
@@ -753,7 +756,9 @@ func TestCreateGrant(t *testing.T) {
 		require.NoError(t, err)
 
 		// Test: Create a new grant
-		_, err = repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), localTextTXHash.Hex(), time.Now())
+		grant, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), time.Now())
+		require.NoError(t, err)
+		_, err = repo.UpdateGrantTxHash(ctx, grant, localTextTXHash.Hex())
 		require.NoError(t, err)
 
 		// Verify: Failed grant should be settled
@@ -777,7 +782,7 @@ func TestCreateGrant(t *testing.T) {
 		t.Parallel()
 		licenseID := "test-license-grant-zero"
 		// Test: Create a grant with zero amount
-		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, 0, testTXHash, time.Now())
+		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, 0, time.Now())
 		require.Error(t, err)
 
 		grants, err := models.CreditGrants(
@@ -792,7 +797,7 @@ func TestCreateGrant(t *testing.T) {
 		licenseID := "test-license-grant-negative"
 		// Test: Try to create a grant with negative amount - this should be handled by the method itself
 		// Since uint64 can't represent negative values, we'll test with 0 instead
-		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, 0, testTXHash, time.Now())
+		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, 0, time.Now())
 		require.Error(t, err)
 
 		grants, err := models.CreditGrants(
@@ -818,7 +823,9 @@ func TestConfirmGrant(t *testing.T) {
 		// Setup: Create a pending grant
 
 		localTextTXHash := common.BytesToAddress([]byte(licenseID))
-		_, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), localTextTXHash.Hex(), time.Now())
+		grant, err := repo.CreateGrant(ctx, licenseID, testAssetID, uint64(defaultGrantAmount), time.Now())
+		require.NoError(t, err)
+		_, err = repo.UpdateGrantTxHash(ctx, grant, localTextTXHash.Hex())
 		require.NoError(t, err)
 
 		// Verify: Check grant was created
