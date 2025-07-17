@@ -67,8 +67,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Asset ID",
-                        "name": "assetId",
+                        "description": "Asset DID",
+                        "name": "assetDID",
                         "in": "path",
                         "required": true
                     },
