@@ -31,7 +31,7 @@ import (
 // @name                        Authorization
 func main() {
 	// create a flag for the settings file
-	settingsFile := flag.String("settings", "settings.yaml", "settings file")
+	settingsFile := flag.String("env", ".env", "env file")
 	withMigrations := flag.Bool("migrations", true, "run migrations")
 	migrateOnly := flag.Bool("migrate-only", false, "run migrations only")
 	flag.Parse()

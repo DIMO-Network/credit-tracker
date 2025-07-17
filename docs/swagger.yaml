@@ -77,9 +77,9 @@ paths:
         name: licenseId
         required: true
         type: string
-      - description: Asset ID
+      - description: Asset DID
         in: path
-        name: assetId
+        name: assetDID
         required: true
         type: string
       - description: From Date
