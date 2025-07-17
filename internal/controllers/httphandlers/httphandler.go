@@ -1,6 +1,8 @@
 package httphandlers
 
 import (
+	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/DIMO-Network/credit-tracker/internal/auth"
@@ -8,6 +10,7 @@ import (
 	"github.com/DIMO-Network/credit-tracker/internal/creditrepo"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
 )
 
 // HTTPController handles VIN VC-related http requests.
@@ -38,30 +41,30 @@ func NewHTTPController(service *creditrepo.Repository, settings *config.Settings
 // @Security     BearerAuth
 // @Router /v1/credits/{licenseId}/usage [get]
 func (v *HTTPController) GetLicenseUsageReport(fiberCtx *fiber.Ctx) error {
-	dexUser, ok := auth.GetDexJWT(fiberCtx)
-	if !ok {
-		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized could not determine user")
-	}
 	licenseID := fiberCtx.Params("licenseId")
-	if dexUser.EthereumAddress != licenseID {
+	if err := isExpectedUser(fiberCtx, licenseID); err != nil {
+		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Unauthorized license does not match")
 		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized license does not match")
 	}
 	fromDateStr := fiberCtx.Query("fromDate")
 	toDateStr := fiberCtx.Query("toDate")
 	fromDate, err := time.Parse(time.RFC3339, fromDateStr)
 	if err != nil {
+		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Invalid fromDate")
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid fromDate")
 	}
 	var toDate time.Time
 	if toDateStr != "" {
 		toDate, err = time.Parse(time.RFC3339, toDateStr)
 		if err != nil {
+			zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Invalid toDate")
 			return fiber.NewError(fiber.StatusBadRequest, "Invalid toDate")
 		}
 	}
 
 	resp, err := v.creditTrackerRepo.GetLicenseUsageReport(fiberCtx.Context(), licenseID, fromDate, toDate)
 	if err != nil {
+		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Failed to get license usage report")
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to get license usage report")
 	}
 
@@ -74,20 +77,17 @@ func (v *HTTPController) GetLicenseUsageReport(fiberCtx *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param  licenseId path string true "License ID"
-// @Param  assetId path string true "Asset ID"
+// @Param  assetDID path string true "Asset DID"
 // @Param  fromDate query string true "From Date"
 // @Param  toDate query string false "To Date"
 // @Success 200 {object} creditrepo.LicenseAssetUsageReport
 // @Security     BearerAuth
 // @Router /v1/credits/{licenseId}/assets/{assetId}/usage [get]
 func (v *HTTPController) GetLicenseAssetUsageReport(fiberCtx *fiber.Ctx) error {
-	dexUser, ok := auth.GetDexJWT(fiberCtx)
-	if !ok {
-		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized could not determine user")
-	}
 	licenseID := fiberCtx.Params("licenseId")
-	assetID := fiberCtx.Params("assetId")
-	if dexUser.EthereumAddress != licenseID {
+	assetDID := fiberCtx.Params("assetID")
+	if err := isExpectedUser(fiberCtx, licenseID); err != nil {
+		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Unauthorized license does not match")
 		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized license does not match")
 	}
 
@@ -95,20 +95,39 @@ func (v *HTTPController) GetLicenseAssetUsageReport(fiberCtx *fiber.Ctx) error {
 	toDateStr := fiberCtx.Query("toDate")
 	fromDate, err := time.Parse(time.RFC3339, fromDateStr)
 	if err != nil {
+		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Invalid fromDate")
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid fromDate")
 	}
 	var toDate time.Time
 	if toDateStr != "" {
 		toDate, err = time.Parse(time.RFC3339, toDateStr)
 		if err != nil {
+			zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Invalid toDate")
 			return fiber.NewError(fiber.StatusBadRequest, "Invalid toDate")
 		}
 	}
-
-	resp, err := v.creditTrackerRepo.GetLicenseAssetUsageReport(fiberCtx.Context(), licenseID, assetID, fromDate, toDate)
+	// unescape the assetDID
+	assetDID, err = url.QueryUnescape(assetDID)
 	if err != nil {
+		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Invalid assetDID")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid assetDID")
+	}
+	resp, err := v.creditTrackerRepo.GetLicenseAssetUsageReport(fiberCtx.Context(), licenseID, assetDID, fromDate, toDate)
+	if err != nil {
+		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Failed to get asset usage report")
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to get asset usage report")
 	}
 
 	return fiberCtx.JSON(resp)
+}
+
+func isExpectedUser(fiberCtx *fiber.Ctx, licenseID string) error {
+	dexUser, ok := auth.GetDexJWT(fiberCtx)
+	if !ok {
+		return fmt.Errorf("failed to get dex user from context")
+	}
+	if dexUser.EthereumAddress != licenseID {
+		return fmt.Errorf("dex user %s does not match requested license %s", dexUser.EthereumAddress, licenseID)
+	}
+	return nil
 }

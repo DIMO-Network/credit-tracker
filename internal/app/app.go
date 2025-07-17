@@ -59,9 +59,8 @@ func setupHttpServer(ctx context.Context, settings *config.Settings, ctrl *httph
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	jwtAuth := auth.Middleware(settings)
-	authenticated := app.Group("", jwtAuth)
-	authenticated.Get("/v1/credits/:licenseId/usage", ctrl.GetLicenseUsageReport)
-	authenticated.Get("/v1/credits/:licenseId/assets/:assetId/usage", ctrl.GetLicenseAssetUsageReport)
+	app.Get("/v1/credits/:licenseId/usage", jwtAuth, ctrl.GetLicenseUsageReport)
+	app.Get("/v1/credits/:licenseId/assets/:assetId/usage", jwtAuth, ctrl.GetLicenseAssetUsageReport)
 
 	return app
 }
