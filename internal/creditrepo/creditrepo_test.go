@@ -631,6 +631,7 @@ func TestRefundCredits(t *testing.T) {
 		operation, err := models.CreditOperations(
 			models.CreditOperationWhere.LicenseID.EQ(licenseID),
 			models.CreditOperationWhere.AssetDid.EQ(testAssetID),
+			models.CreditOperationWhere.OperationType.EQ(OperationTypeRefund),
 		).One(ctx, db)
 		require.NoError(t, err)
 		assert.Equal(t, OperationTypeRefund, operation.OperationType)
