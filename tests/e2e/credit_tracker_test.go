@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/DIMO-Network/credit-tracker/tests"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -79,9 +81,9 @@ func setupTestServer(t *testing.T) *TestServer {
 }
 
 func TestCreditTrackerEndToEnd(t *testing.T) {
+	t.Parallel()
 	// Set up test server
 	server := setupTestServer(t)
-	defer server.rpcServer.GracefulStop()
 
 	// Connect to the server
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -105,13 +107,15 @@ func TestCreditTrackerEndToEnd(t *testing.T) {
 }
 
 func TestCreditTrackerBasicAuth(t *testing.T) {
+	t.Parallel()
 	// Set up test server
 	server := setupTestServer(t)
-	defer server.app.Shutdown()
 
 	// Connect to the server
 	devAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	req := httptest.NewRequestWithContext(t.Context(), "GET", "/v1/credits/"+devAddress.String()+"/usage?fromDate=2025-01-01T00:00:00Z", nil)
+	logger := zerolog.New(os.Stderr).Level(zerolog.DebugLevel)
+	ctx := logger.WithContext(t.Context())
+	req := httptest.NewRequestWithContext(ctx, "GET", "/v1/credits/"+devAddress.String()+"/usage?fromDate=2025-01-01T00:00:00Z", nil)
 	token, err := server.authServer.CreateToken(t, devAddress)
 	require.NoError(t, err)
 	req.Header.Set("Authorization", "Bearer "+token)
