@@ -2,7 +2,7 @@ replicaCount: 6
 image:
   repository: dimozone/credit-tracker
   pullPolicy: IfNotPresent
-  tag: 0.0.5
+  tag: 0.0.6
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
