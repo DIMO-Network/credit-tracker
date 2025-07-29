@@ -48,6 +48,9 @@ func (v *HTTPController) GetLicenseUsageReport(fiberCtx *fiber.Ctx) error {
 	}
 	fromDateStr := fiberCtx.Query("fromDate")
 	toDateStr := fiberCtx.Query("toDate")
+	if fromDateStr == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "fromDate is required")
+	}
 	fromDate, err := time.Parse(time.RFC3339, fromDateStr)
 	if err != nil {
 		zerolog.Ctx(fiberCtx.UserContext()).Error().Err(err).Msg("Invalid fromDate")

@@ -40,6 +40,13 @@ func GetDexJWT(c *fiber.Ctx) (*Token, bool) {
 	if localValue == nil {
 		return nil, false
 	}
-	user, ok := localValue.(*Token)
-	return user, ok
+	v5Token, ok := localValue.(*jwt.Token)
+	if !ok {
+		return nil, false
+	}
+	token, ok := v5Token.Claims.(*Token)
+	if !ok {
+		return nil, false
+	}
+	return token, true
 }

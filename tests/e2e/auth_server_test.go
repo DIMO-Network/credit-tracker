@@ -71,8 +71,8 @@ func setupAuthServer(t *testing.T) *mockAuthServer {
 	mockServer.defaultClaims.Issuer = "https://auth.dimo.zone"
 	mockServer.defaultClaims.ProviderID = "web3"
 	mockServer.defaultClaims.Subject = "CioweGQ4NDhBM2Y3NTAxOTc5MDY5RTFEQkMxN2YzNjYzNzlmMzQxODdFQTYSBHdlYjM"
-	mockServer.defaultClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(1749822216, 0))
-	mockServer.defaultClaims.IssuedAt = jwt.NewNumericDate(time.Unix(1748612616, 0))
+	mockServer.defaultClaims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(1 * time.Hour))
+	mockServer.defaultClaims.IssuedAt = jwt.NewNumericDate(time.Now().Add(-1 * time.Hour))
 	mockServer.defaultClaims.AtHash = "MOcfynR2IuZAuy11gKHmDA"
 	mockServer.defaultClaims.EmailVerified = false
 
