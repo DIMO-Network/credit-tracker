@@ -11,13 +11,14 @@ require (
 	github.com/friendsofgo/errors v0.9.2
 	github.com/go-jose/go-jose/v4 v4.1.1
 	github.com/gofiber/contrib/jwt v1.1.2
-	github.com/gofiber/fiber/v2 v2.52.8
+	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/gofiber/swagger v1.1.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/prometheus/client_golang v1.22.0
@@ -33,7 +34,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -113,7 +113,6 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -207,6 +206,7 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.1 // indirect
 	modernc.org/libc v1.65.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
