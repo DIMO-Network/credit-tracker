@@ -19,7 +19,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-      - all
+    - all
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
@@ -49,15 +49,15 @@ service:
       targetPort: grpc
       protocol: TCP
 ports:
-  - name: mon-http
-    containerPort: 8888
-    protocol: TCP
-  - name: http
-    containerPort: 8080
-    protocol: TCP
-  - name: grpc
-    containerPort: 8086
-    protocol: TCP
+- name: mon-http
+  containerPort: 8888
+  protocol: TCP
+- name: http
+  containerPort: 8080
+  protocol: TCP
+- name: grpc
+  containerPort: 8086
+  protocol: TCP
 ingress:
   enabled: true
   className: nginx
@@ -69,18 +69,18 @@ ingress:
     nginx.ingress.kubernetes.io/limit-rps: '25'
     external-dns.alpha.kubernetes.io/hostname: credit-tracker.dev.dimo.zone
   hosts:
-    - host: credit-tracker.dev.dimo.zone
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
+  - host: credit-tracker.dev.dimo.zone
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
   tls: []
 resources:
   limits:
     cpu: 250m
     memory: 384Mi
   requests:
-    cpu: 100m
-    memory: 192Mi
+    cpu: 5m
+    memory: 32Mi
 autoscaling:
   enabled: false
   minReplicas: 1
