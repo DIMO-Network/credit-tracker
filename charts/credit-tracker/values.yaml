@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: dimozone/credit-tracker
   pullPolicy: IfNotPresent
-  tag: 59ed4a0
+  tag: ba2c208
 imagePullSecrets: []
 nameOverride: ''
 fullnameOverride: ''
@@ -19,7 +19,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-    - all
+      - all
 cronJob:
   enabled: false
   schedule: 0 0 * * 0
@@ -49,15 +49,15 @@ service:
       targetPort: grpc
       protocol: TCP
 ports:
-- name: mon-http
-  containerPort: 8888
-  protocol: TCP
-- name: http
-  containerPort: 8080
-  protocol: TCP
-- name: grpc
-  containerPort: 8086
-  protocol: TCP
+  - name: mon-http
+    containerPort: 8888
+    protocol: TCP
+  - name: http
+    containerPort: 8080
+    protocol: TCP
+  - name: grpc
+    containerPort: 8086
+    protocol: TCP
 ingress:
   enabled: true
   className: nginx
@@ -69,10 +69,10 @@ ingress:
     nginx.ingress.kubernetes.io/limit-rps: '25'
     external-dns.alpha.kubernetes.io/hostname: credit-tracker.dev.dimo.zone
   hosts:
-  - host: credit-tracker.dev.dimo.zone
-    paths:
-    - path: /
-      pathType: ImplementationSpecific
+    - host: credit-tracker.dev.dimo.zone
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
   tls: []
 resources:
   limits:
